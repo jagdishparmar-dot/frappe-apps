@@ -11,3 +11,8 @@ dist/
 .tmp/
 .cursor/
 screenshot-*.png
+
+deployemn-log.txt
+deployment-log.txt
+*.deploy.log
+

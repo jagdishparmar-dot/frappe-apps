@@ -164,9 +164,6 @@ services:
     command: ["nginx-entrypoint.sh"]
     environment:
       <<: *frappe-env
-      # Coolify magic vars: generates FQDN/URL for this service (port 8080)
-      SERVICE_FQDN_FRAPPENGINX:
-      SERVICE_URL_FRAPPENGINX_8080:
       BACKEND: backend:8000
       FRAPPE_SITE_NAME_HEADER: ${FRAPPE_SITE_NAME:-vendors.localhost}
       SOCKETIO: websocket:9000
@@ -180,7 +177,8 @@ services:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
       - ./docker/frappe/nginx/frappe.conf.template:/templates/nginx/frappe.conf.template:ro
-    expose:
+    # Publish container port only (no host bind) so Coolify can attach a domain → 8080
+    ports:
       - "8080"
     depends_on:
       - backend
@@ -203,15 +201,13 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment:
-      # Coolify magic vars: generates FQDN/URL for this service (port 3000)
-      SERVICE_FQDN_VENDORWEB:
-      SERVICE_URL_VENDORWEB_3000:
       FRAPPE_URL: http://backend:8000
       FRAPPE_SITE_NAME: ${FRAPPE_SITE_NAME:-vendors.localhost}
       NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Vendor Directory}
       # Coolify terminates TLS — set true in production
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
-    expose:
+    # Publish container port only (no host bind) so Coolify can attach a domain → 3000
+    ports:
       - "3000"
     depends_on:
       create-site:

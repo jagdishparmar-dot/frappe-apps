@@ -46,9 +46,14 @@ else
 fi
 
 # Behind Coolify / Traefik / Caddy: tell Frappe its public HTTPS URL
-if [[ -n "${SITE_HOST_NAME}" ]]; then
-  echo "Setting host_name=${SITE_HOST_NAME}"
-  bench --site "${SITE_NAME}" set-config host_name "${SITE_HOST_NAME}"
+# Skip incomplete values like "https://" which Coolify/env UIs sometimes leave blank.
+if [[ -n "${SITE_HOST_NAME}" && "${SITE_HOST_NAME}" != "https://" && "${SITE_HOST_NAME}" != "http://" ]]; then
+  if [[ "${SITE_HOST_NAME}" =~ ^https?://[^/]+ ]]; then
+    echo "Setting host_name=${SITE_HOST_NAME}"
+    bench --site "${SITE_NAME}" set-config host_name "${SITE_HOST_NAME}"
+  else
+    echo "Skipping invalid SITE_HOST_NAME=${SITE_HOST_NAME} (expected e.g. https://desk.example.com)"
+  fi
 fi
 
 echo "Writing optional API credentials file (not required for UI login)"

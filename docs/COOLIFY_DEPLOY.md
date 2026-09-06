@@ -53,12 +53,7 @@ Frappe’s site folder is named after `FRAPPE_SITE_NAME`. Nginx and socket.io al
 - Set `FRAPPE_SITE_NAME` / `SITE_HOST_NAME` to the **final Desk domain before the first successful `create-site` run**.
 - Changing the Desk domain later usually means recreating the `sites` volume (data loss) or a manual site migration.
 
-If Coolify already generated `SERVICE_FQDN_FRAPPENGINX`, you can set:
-
-```text
-FRAPPE_SITE_NAME=<value of SERVICE_FQDN_FRAPPENGINX>
-SITE_HOST_NAME=https://<same hostname>
-```
+`SITE_HOST_NAME` must be a **full** URL (`https://desk.yourdomain.com`). Do not leave it as bare `https://` — that breaks Coolify URL parsing and Frappe config.
 
 ---
 
@@ -71,7 +66,7 @@ After Coolify parses the stack:
 
 Ensure WebSocket / HTTPS is allowed for the Desk domain (Coolify proxy handles `/socket.io` on the same host).
 
-Do **not** publish host ports yourself; Coolify’s proxy routes to the container ports exposed in compose (`expose: 3000` / `8080`).
+Compose publishes container ports `3000` / `8080` without binding a fixed host port, so Coolify’s proxy can route to them.
 
 ---
 
@@ -175,6 +170,7 @@ Keep `COOKIE_SECURE=false` and `FRAPPE_SITE_NAME=vendors.localhost` locally.
 | 502 / No Available Server | Service unhealthy or wrong port on Coolify domain (must be 3000 / 8080). |
 | Build OOM | Use a larger Coolify server or remote build server. |
 | `create-site` stuck | Check `db` healthy + Redis; inspect `create-site` logs. |
+| `The string https:// is no valid url` | Incomplete Coolify/env URL. Set full `SITE_HOST_NAME=https://desk…` (or leave empty until domains exist). Redeploy after pulling latest compose (empty `SERVICE_URL_*` magic vars were removed). |
 
 ### Force site recreate (destructive)
 
