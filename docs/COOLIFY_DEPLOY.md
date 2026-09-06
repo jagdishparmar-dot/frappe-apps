@@ -171,6 +171,7 @@ Keep `COOKIE_SECURE=false` and `FRAPPE_SITE_NAME=vendors.localhost` locally.
 | Build OOM | Use a larger Coolify server or remote build server. |
 | `create-site` stuck | Check `db` healthy + Redis; inspect `create-site` logs. |
 | `The string https:// is no valid url` | Incomplete Coolify/env URL. Set full `SITE_HOST_NAME=https://desk…` (or leave empty until domains exist). Redeploy after pulling latest compose (empty `SERVICE_URL_*` magic vars were removed). |
+| `mount ... frappe.conf.template ... not a directory` | Fixed by baking the nginx template into the image (no file bind-mount). Redeploy/rebuild from latest `main`. |
 
 ### Force site recreate (destructive)
 

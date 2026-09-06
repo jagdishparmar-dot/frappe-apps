@@ -176,7 +176,6 @@ services:
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
-      - ./docker/frappe/nginx/frappe.conf.template:/templates/nginx/frappe.conf.template:ro
     # Publish container port only (no host bind) so Coolify can attach a domain → 8080
     ports:
       - "8080"
