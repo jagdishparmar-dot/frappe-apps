@@ -6,6 +6,8 @@ ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
 DB_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-admin}"
 # Public origin used by Frappe behind Coolify / reverse proxy, e.g. https://desk.example.com
 SITE_HOST_NAME="${SITE_HOST_NAME:-}"
+# Install Frappe CRM on the site when the app is present in the image (default: yes)
+INSTALL_CRM="${INSTALL_CRM:-1}"
 # Write into the sites volume (owned by frappe). The anonymous /shared volume is root-owned.
 CREDENTIALS_FILE="${CREDENTIALS_FILE:-/home/frappe/frappe-bench/sites/credentials.json}"
 
@@ -30,18 +32,37 @@ done
 
 echo "common_site_config.json ready"
 
-if [[ -d "sites/${SITE_NAME}" ]]; then
-  echo "Site ${SITE_NAME} already exists — ensuring vendor_directory is installed"
-  bench --site "${SITE_NAME}" install-app vendor_directory || true
+install_apps=(vendor_directory)
+if [[ "${INSTALL_CRM}" == "1" && -d "apps/crm" ]]; then
+  install_apps+=(crm)
+elif [[ "${INSTALL_CRM}" == "1" ]]; then
+  echo "WARNING: INSTALL_CRM=1 but apps/crm is missing from the image — rebuild with INSTALL_CRM=1"
+fi
+
+install_app_flags=()
+for app in "${install_apps[@]}"; do
+  install_app_flags+=(--install-app "${app}")
+done
+
+ensure_apps_installed() {
+  for app in "${install_apps[@]}"; do
+    echo "Ensuring app installed: ${app}"
+    bench --site "${SITE_NAME}" install-app "${app}" || true
+  done
   bench --site "${SITE_NAME}" migrate
+}
+
+if [[ -d "sites/${SITE_NAME}" ]]; then
+  echo "Site ${SITE_NAME} already exists — ensuring apps are installed"
+  ensure_apps_installed
 else
-  echo "Creating site ${SITE_NAME} (Frappe + vendor_directory only)"
+  echo "Creating site ${SITE_NAME} with apps: ${install_apps[*]}"
   bench new-site "${SITE_NAME}" \
     --mariadb-user-host-login-scope='%' \
     --admin-password="${ADMIN_PASSWORD}" \
     --db-root-username=root \
     --db-root-password="${DB_ROOT_PASSWORD}" \
-    --install-app vendor_directory \
+    "${install_app_flags[@]}" \
     --set-default
 fi
 
@@ -60,4 +81,4 @@ echo "Writing optional API credentials file (not required for UI login)"
 bench --site "${SITE_NAME}" execute vendor_directory.bootstrap.write_api_credentials \
   --kwargs "{\"path\": \"${CREDENTIALS_FILE}\"}" || echo "Skipped API credential write"
 
-echo "Site bootstrap complete"
+echo "Site bootstrap complete (apps: ${install_apps[*]})"

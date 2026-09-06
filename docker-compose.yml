@@ -19,6 +19,8 @@ x-frappe: &frappe
     args:
       FRAPPE_VERSION: ${FRAPPE_VERSION:-v16}
       FRAPPE_BRANCH: ${FRAPPE_BRANCH:-version-16}
+      INSTALL_CRM: ${INSTALL_CRM:-1}
+      CRM_BRANCH: ${CRM_BRANCH:-main}
   pull_policy: build
   environment: &frappe-env
     DB_HOST: db
@@ -32,6 +34,8 @@ x-frappe: &frappe
     ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
     CREDENTIALS_FILE: /home/frappe/frappe-bench/sites/credentials.json
     FRAPPE_INTERNAL_URL: http://backend:8000
+    # Passed to create-site.sh (1 = install crm when apps/crm exists in the image)
+    INSTALL_CRM: ${INSTALL_CRM:-1}
   volumes: &frappe-volumes
     - sites:/home/frappe/frappe-bench/sites
     - logs:/home/frappe/frappe-bench/logs

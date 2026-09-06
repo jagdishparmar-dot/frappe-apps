@@ -1,10 +1,13 @@
-# Plain Frappe + vendor_directory (no ERPNext)
+# Plain Frappe + vendor_directory (+ optional Frappe CRM)
 ARG FRAPPE_VERSION=v16
 FROM frappe/build:${FRAPPE_VERSION} AS builder
 
 ARG FRAPPE_BRANCH=version-16
 ARG FRAPPE_PATH=https://github.com/frappe/frappe
 ARG FRAPPE_VERSION=v16
+# Frappe CRM (https://github.com/frappe/crm) — main is stable for Frappe v15/v16
+ARG CRM_BRANCH=main
+ARG INSTALL_CRM=1
 
 USER frappe
 
@@ -24,7 +27,14 @@ COPY --chown=frappe:frappe apps/vendor_directory /home/frappe/frappe-bench/apps/
 
 RUN cd /home/frappe/frappe-bench \
   && ./env/bin/pip install --quiet --no-cache-dir -e apps/vendor_directory \
-  && bench build --app frappe
+  && if [ "${INSTALL_CRM}" = "1" ]; then \
+       bench get-app crm https://github.com/frappe/crm --branch "${CRM_BRANCH}" \
+       && ./env/bin/pip install --quiet --no-cache-dir -e apps/crm \
+       && bench build --app frappe --app crm; \
+     else \
+       bench build --app frappe; \
+     fi \
+  && find apps -mindepth 1 -path "*/.git" | xargs rm -fr || true
 
 FROM frappe/base:${FRAPPE_VERSION} AS backend
 

@@ -41,6 +41,11 @@ apps/vendor_directory/   # Frappe admin app + portal APIs
 frontend/vendor-web/     # Vendor Portal (Next.js)
 docker/                  # Images + nginx templates
 docs/COOLIFY_DEPLOY.md   # Coolify production guide
+docs/ADD_FRAPPE_CRM.md   # Install official Frappe CRM alongside this stack
 docker-compose.yml       # Coolify / production compose
 docker-compose.dev.yml   # Local ports + gateway overlay
 ```
+
+## Optional: Frappe CRM
+
+Set `INSTALL_CRM=1` (default) and rebuild — see [docs/ADD_FRAPPE_CRM.md](docs/ADD_FRAPPE_CRM.md). CRM UI: `/crm` on the Desk domain.
