@@ -1,0 +1,243 @@
+# Vendor Directory — Docker Compose
+#
+# Coolify (default): Coolify proxy assigns domains to vendor-web + frappe-nginx.
+# Local:            docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
+#
+# Public services (assign domains in Coolify):
+#   vendor-web    → Vendor Portal  (port 3000)
+#   frappe-nginx  → Frappe Desk    (port 8080)
+#
+# Do NOT assign domains to: db, redis-*, backend, websocket, workers, scheduler
+
+name: vendor-directory
+
+x-frappe: &frappe
+  image: vendor-directory-frappe:latest
+  build:
+    context: .
+    dockerfile: docker/frappe/Dockerfile
+    args:
+      FRAPPE_VERSION: ${FRAPPE_VERSION:-v16}
+      FRAPPE_BRANCH: ${FRAPPE_BRANCH:-version-16}
+  pull_policy: build
+  environment: &frappe-env
+    DB_HOST: db
+    DB_PORT: "3306"
+    MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+    MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+    # Must match the Frappe Desk public hostname (Coolify FQDN without scheme)
+    SITE_NAME: ${FRAPPE_SITE_NAME:-vendors.localhost}
+    # Public HTTPS origin for Frappe (Coolify desk URL), e.g. https://desk.example.com
+    SITE_HOST_NAME: ${SITE_HOST_NAME:-}
+    ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
+    CREDENTIALS_FILE: /home/frappe/frappe-bench/sites/credentials.json
+    FRAPPE_INTERNAL_URL: http://backend:8000
+  volumes: &frappe-volumes
+    - sites:/home/frappe/frappe-bench/sites
+    - logs:/home/frappe/frappe-bench/logs
+  networks: [frappe_network]
+
+services:
+  db:
+    image: mariadb:11.8
+    restart: unless-stopped
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+      MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
+    volumes:
+      - db-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      start_period: 10s
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [frappe_network]
+
+  redis-cache:
+    image: redis:6.2-alpine
+    restart: unless-stopped
+    networks: [frappe_network]
+
+  redis-queue:
+    image: redis:6.2-alpine
+    restart: unless-stopped
+    volumes:
+      - redis-queue-data:/data
+    networks: [frappe_network]
+
+  configurator:
+    <<: *frappe
+    restart: "no"
+    entrypoint: ["bash", "-c"]
+    command:
+      - >
+        ls -1 apps > sites/apps.txt;
+        bench set-config -g db_host $$DB_HOST;
+        bench set-config -gp db_port $$DB_PORT;
+        bench set-config -g redis_cache "redis://$$REDIS_CACHE";
+        bench set-config -g redis_queue "redis://$$REDIS_QUEUE";
+        bench set-config -g redis_socketio "redis://$$REDIS_QUEUE";
+        bench set-config -gp socketio_port $$SOCKETIO_PORT;
+    environment:
+      <<: *frappe-env
+      REDIS_CACHE: redis-cache:6379
+      REDIS_QUEUE: redis-queue:6379
+      SOCKETIO_PORT: "9000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
+      redis-queue:
+        condition: service_started
+
+  create-site:
+    <<: *frappe
+    restart: "no"
+    entrypoint: ["/home/frappe/create-site.sh"]
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
+
+  backend:
+    <<: *frappe
+    restart: unless-stopped
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+
+  websocket:
+    <<: *frappe
+    restart: unless-stopped
+    command:
+      - node
+      - /home/frappe/frappe-bench/apps/frappe/socketio.js
+    environment:
+      <<: *frappe-env
+      FRAPPE_REDIS_CACHE: redis://redis-cache:6379
+      FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+
+  queue-short:
+    <<: *frappe
+    restart: unless-stopped
+    command: ["bench", "worker", "--queue", "short,default"]
+    environment:
+      <<: *frappe-env
+      FRAPPE_REDIS_CACHE: redis://redis-cache:6379
+      FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+
+  queue-long:
+    <<: *frappe
+    restart: unless-stopped
+    command: ["bench", "worker", "--queue", "long,default,short"]
+    environment:
+      <<: *frappe-env
+      FRAPPE_REDIS_CACHE: redis://redis-cache:6379
+      FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+
+  scheduler:
+    <<: *frappe
+    restart: unless-stopped
+    command: ["bench", "schedule"]
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+
+  # Public — Frappe Desk + API + socket.io (Coolify domain → port 8080)
+  frappe-nginx:
+    <<: *frappe
+    restart: unless-stopped
+    command: ["nginx-entrypoint.sh"]
+    environment:
+      <<: *frappe-env
+      # Coolify magic vars: generates FQDN/URL for this service (port 8080)
+      SERVICE_FQDN_FRAPPENGINX:
+      SERVICE_URL_FRAPPENGINX_8080:
+      BACKEND: backend:8000
+      FRAPPE_SITE_NAME_HEADER: ${FRAPPE_SITE_NAME:-vendors.localhost}
+      SOCKETIO: websocket:9000
+      # Trust Coolify Traefik / Caddy forwarded headers
+      UPSTREAM_REAL_IP_ADDRESS: ${UPSTREAM_REAL_IP_ADDRESS:-0.0.0.0/0}
+      UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
+      UPSTREAM_REAL_IP_RECURSIVE: "on"
+      PROXY_READ_TIMEOUT: "120"
+      CLIENT_MAX_BODY_SIZE: 50m
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+      - ./docker/frappe/nginx/frappe.conf.template:/templates/nginx/frappe.conf.template:ro
+    expose:
+      - "8080"
+    depends_on:
+      - backend
+      - websocket
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sf -H \"Host: $${FRAPPE_SITE_NAME_HEADER}\" http://127.0.0.1:8080/api/method/ping || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  # Public — Vendor Portal (Coolify domain → port 3000)
+  vendor-web:
+    build:
+      context: ./frontend/vendor-web
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      # Coolify magic vars: generates FQDN/URL for this service (port 3000)
+      SERVICE_FQDN_VENDORWEB:
+      SERVICE_URL_VENDORWEB_3000:
+      FRAPPE_URL: http://backend:8000
+      FRAPPE_SITE_NAME: ${FRAPPE_SITE_NAME:-vendors.localhost}
+      NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Vendor Directory}
+      # Coolify terminates TLS — set true in production
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+    expose:
+      - "3000"
+    depends_on:
+      create-site:
+        condition: service_completed_successfully
+      backend:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    networks: [frappe_network]
+
+volumes:
+  db-data:
+  redis-queue-data:
+  sites:
+  logs:
+
+networks:
+  frappe_network:
+    driver: bridge

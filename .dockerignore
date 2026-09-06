@@ -1,0 +1,10 @@
+.git
+**/node_modules
+**/.next
+**/.env
+**/.env.*
+**/__pycache__
+**/*.pyc
+docs
+*.md
+!apps/vendor_directory/README.md

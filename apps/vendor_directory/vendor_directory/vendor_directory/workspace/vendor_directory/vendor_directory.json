@@ -1,0 +1,66 @@
+{
+ "app": "vendor_directory",
+ "charts": [],
+ "content": "[{\"id\":\"vd_hdr\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Vendor Directory</span>\",\"col\":12}},{\"id\":\"vd_sc1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Vendor\",\"col\":3}},{\"id\":\"vd_sc2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Vendor\",\"col\":3}},{\"id\":\"vd_sp\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"vd_card\",\"type\":\"card\",\"data\":{\"card_name\":\"Vendors\",\"col\":4}}]",
+ "creation": "2026-09-05 21:30:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "organization",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "Vendor Directory",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Vendors",
+   "link_count": 1,
+   "link_type": "Card Break",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Vendor",
+   "link_count": 0,
+   "link_to": "Vendor",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-09-05 21:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Vendor Directory",
+ "name": "Vendor Directory",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 1.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Vendor",
+   "link_to": "Vendor",
+   "stats_filter": "[]",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "New",
+   "label": "New Vendor",
+   "link_to": "Vendor",
+   "type": "DocType"
+  }
+ ],
+ "title": "Vendor Directory"
+}
