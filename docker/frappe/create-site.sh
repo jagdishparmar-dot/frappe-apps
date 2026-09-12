@@ -33,6 +33,11 @@ done
 echo "common_site_config.json ready"
 
 install_apps=(vendor_directory)
+if [[ -d "apps/vendor_billing" ]]; then
+  install_apps+=(vendor_billing)
+else
+  echo "WARNING: apps/vendor_billing missing from the image — rebuild the Frappe image"
+fi
 if [[ "${INSTALL_CRM}" == "1" && -d "apps/crm" ]]; then
   install_apps+=(crm)
 elif [[ "${INSTALL_CRM}" == "1" ]]; then

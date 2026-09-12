@@ -1,0 +1,61 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-12 13:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "document_kind",
+  "attachment",
+  "original_file_name",
+  "legacy_path"
+ ],
+ "fields": [
+  {
+   "fieldname": "document_kind",
+   "fieldtype": "Select",
+   "label": "Kind",
+   "options": "kyc\npan\ngst\nmsme\nother",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "label": "File",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "original_file_name",
+   "fieldtype": "Data",
+   "label": "Original Name",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "legacy_path",
+   "fieldtype": "Data",
+   "label": "Legacy S3 Key",
+   "read_only": 1
+  }
+ ],
+ "idx": 0,
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "issingle": 0,
+ "links": [],
+ "modified": "2026-09-12 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Vendor Billing",
+ "name": "VB KYC Document",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0,
+ "editable_grid": 1,
+ "autoname": "hash",
+ "naming_rule": "Random"
+}

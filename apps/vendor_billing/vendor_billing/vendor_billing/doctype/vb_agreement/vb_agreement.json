@@ -1,0 +1,313 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-12 13:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "vendor",
+  "agreement_type",
+  "column_break_1",
+  "status",
+  "section_break_dates",
+  "start_date",
+  "end_date",
+  "section_break_parties",
+  "first_party_name",
+  "second_party_name",
+  "both_party_name",
+  "section_break_file",
+  "agreement_file",
+  "legacy_file_path",
+  "uploaded_by",
+  "remarks",
+  "section_break_rates",
+  "rate_card_items",
+  "section_break_archive",
+  "archived",
+  "archived_at",
+  "deletion_remarks",
+  "legacy_id",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "vendor",
+   "fieldtype": "Link",
+   "label": "Vendor",
+   "options": "VB Vendor",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "agreement_type",
+   "fieldtype": "Select",
+   "label": "Type",
+   "options": "Registered\nNotaries\nLetterhead\nStamp Paper\nRent\nVehicle Rent\nManpower\nRepairs & Maintenance\nCP Agreements\nExpense Agreement",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break",
+   "label": "Column Break 1"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Active\nExpiring Soon\nExpired\nTerminated",
+   "default": "Active",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "section_break_dates",
+   "fieldtype": "Section Break",
+   "label": "Term"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "label": "Start Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "label": "End Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "section_break_parties",
+   "fieldtype": "Section Break",
+   "label": "Parties"
+  },
+  {
+   "fieldname": "first_party_name",
+   "fieldtype": "Data",
+   "label": "First Party"
+  },
+  {
+   "fieldname": "second_party_name",
+   "fieldtype": "Data",
+   "label": "Second Party"
+  },
+  {
+   "fieldname": "both_party_name",
+   "fieldtype": "Data",
+   "label": "Both Parties"
+  },
+  {
+   "fieldname": "section_break_file",
+   "fieldtype": "Section Break",
+   "label": "File"
+  },
+  {
+   "fieldname": "agreement_file",
+   "fieldtype": "Attach",
+   "label": "Agreement File",
+   "reqd": 1
+  },
+  {
+   "fieldname": "legacy_file_path",
+   "fieldtype": "Data",
+   "label": "Legacy S3 Key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "uploaded_by",
+   "fieldtype": "Link",
+   "label": "Uploaded By",
+   "options": "User"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "section_break_rates",
+   "fieldtype": "Section Break",
+   "label": "Rate card"
+  },
+  {
+   "fieldname": "rate_card_items",
+   "fieldtype": "Table",
+   "label": "Rate Card",
+   "options": "VB Agreement Rate Card Item"
+  },
+  {
+   "fieldname": "section_break_archive",
+   "fieldtype": "Section Break",
+   "label": "Archive"
+  },
+  {
+   "fieldname": "archived",
+   "fieldtype": "Check",
+   "label": "Archived",
+   "default": "0",
+   "in_standard_filter": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "archived_at",
+   "fieldtype": "Datetime",
+   "label": "Archived At",
+   "read_only": 1,
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "deletion_remarks",
+   "fieldtype": "Small Text",
+   "label": "Deletion Remarks",
+   "allow_on_submit": 1
+  },
+  {
+   "fieldname": "legacy_id",
+   "fieldtype": "Data",
+   "label": "Legacy Id",
+   "hidden": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "VB Agreement",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "idx": 0,
+ "index_web_pages_for_search": 1,
+ "istable": 0,
+ "issingle": 0,
+ "links": [],
+ "modified": "2026-09-12 18:15:00.000000",
+ "modified_by": "Administrator",
+ "module": "Vendor Billing",
+ "name": "VB Agreement",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "select": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "submit": 1,
+   "amend": 1,
+   "cancel": 1
+  },
+  {
+   "role": "VB Admin",
+   "read": 1,
+   "select": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "submit": 1,
+   "amend": 1,
+   "cancel": 1
+  },
+  {
+   "role": "VB Vendor Manager",
+   "read": 1,
+   "select": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0,
+   "submit": 1,
+   "amend": 1,
+   "cancel": 1
+  },
+  {
+   "role": "VB Vendor Manager",
+   "read": 1,
+   "select": 1,
+   "create": 0,
+   "write": 0,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0,
+   "cancel": 0
+  },
+  {
+   "role": "VB Viewer",
+   "read": 1,
+   "select": 1,
+   "create": 0,
+   "write": 0,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0
+  },
+  {
+   "role": "VB Auditor",
+   "read": 1,
+   "select": 1,
+   "create": 0,
+   "write": 0,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0
+  },
+  {
+   "role": "VB AP Operator",
+   "read": 1,
+   "select": 1,
+   "create": 0,
+   "write": 0,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "editable_grid": 0,
+ "autoname": "hash",
+ "naming_rule": "Random",
+ "title_field": "agreement_type",
+ "show_title_field_in_link": 1,
+ "search_fields": "vendor,agreement_type,status",
+ "is_submittable": 1
+}

@@ -1,0 +1,289 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-12 13:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "vendor_name",
+  "status",
+  "column_break_1",
+  "token",
+  "kyc_status",
+  "section_break_contact",
+  "email",
+  "phone",
+  "phone_normalized",
+  "column_break_2",
+  "gst_number",
+  "legacy_id",
+  "section_break_assign",
+  "hubs",
+  "categories",
+  "states",
+  "section_break_archive",
+  "archived",
+  "archived_at",
+  "deletion_remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "vendor_name",
+   "fieldtype": "Data",
+   "label": "Vendor Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_global_search": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "active\ninactive",
+   "default": "active",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break",
+   "label": "Column Break 1"
+  },
+  {
+   "fieldname": "token",
+   "fieldtype": "Data",
+   "label": "Portal Token",
+   "unique": 1,
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "kyc_status",
+   "fieldtype": "Select",
+   "label": "KYC Status",
+   "options": "pending_submission\npending_verification\nverified\nrejected",
+   "default": "pending_submission",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "section_break_contact",
+   "fieldtype": "Section Break",
+   "label": "Contact"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "phone_normalized",
+   "fieldtype": "Data",
+   "label": "Phone Normalized",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break",
+   "label": "Column Break 2"
+  },
+  {
+   "fieldname": "gst_number",
+   "fieldtype": "Data",
+   "label": "GSTIN"
+  },
+  {
+   "fieldname": "legacy_id",
+   "fieldtype": "Data",
+   "label": "Legacy Id",
+   "hidden": 1
+  },
+  {
+   "fieldname": "section_break_assign",
+   "fieldtype": "Section Break",
+   "label": "Assignments"
+  },
+  {
+   "fieldname": "hubs",
+   "fieldtype": "Table",
+   "label": "Hubs",
+   "options": "VB Vendor Hub"
+  },
+  {
+   "fieldname": "categories",
+   "fieldtype": "Table",
+   "label": "Categories",
+   "options": "VB Vendor Category"
+  },
+  {
+   "fieldname": "states",
+   "fieldtype": "Table",
+   "label": "States",
+   "options": "VB Vendor State"
+  },
+  {
+   "fieldname": "section_break_archive",
+   "fieldtype": "Section Break",
+   "label": "Archive"
+  },
+  {
+   "fieldname": "archived",
+   "fieldtype": "Check",
+   "label": "Archived",
+   "default": "0",
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "archived_at",
+   "fieldtype": "Datetime",
+   "label": "Archived At",
+   "read_only": 1
+  },
+  {
+   "fieldname": "deletion_remarks",
+   "fieldtype": "Small Text",
+   "label": "Deletion Remarks"
+  }
+ ],
+ "idx": 0,
+ "index_web_pages_for_search": 1,
+ "istable": 0,
+ "issingle": 0,
+ "links": [
+  {
+   "link_doctype": "VB Invoice",
+   "link_fieldname": "vendor"
+  },
+  {
+   "link_doctype": "VB Agreement",
+   "link_fieldname": "vendor"
+  },
+  {
+   "link_doctype": "VB Vendor KYC",
+   "link_fieldname": "vendor"
+  },
+  {
+   "link_doctype": "VB Vendor Note",
+   "link_fieldname": "vendor"
+  }
+ ],
+ "modified": "2026-09-12 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Vendor Billing",
+ "name": "VB Vendor",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "select": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "VB Admin",
+   "read": 1,
+   "select": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "VB Vendor Manager",
+   "read": 1,
+   "select": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0
+  },
+  {
+   "role": "VB Vendor Manager",
+   "read": 1,
+   "select": 1,
+   "create": 0,
+   "write": 0,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0
+  },
+  {
+   "role": "VB Viewer",
+   "read": 1,
+   "select": 1,
+   "create": 0,
+   "write": 0,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0
+  },
+  {
+   "role": "VB Auditor",
+   "read": 1,
+   "select": 1,
+   "create": 0,
+   "write": 0,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0
+  },
+  {
+   "role": "VB AP Operator",
+   "read": 1,
+   "select": 1,
+   "create": 0,
+   "write": 0,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "editable_grid": 0,
+ "autoname": "hash",
+ "naming_rule": "Random",
+ "title_field": "vendor_name",
+ "show_title_field_in_link": 1,
+ "search_fields": "vendor_name,phone,email,gst_number,token"
+}

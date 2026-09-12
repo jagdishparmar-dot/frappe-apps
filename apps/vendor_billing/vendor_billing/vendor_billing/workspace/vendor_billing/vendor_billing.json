@@ -1,0 +1,298 @@
+{
+ "app": "vendor_billing",
+ "charts": [
+  {
+   "chart_name": "VB Invoices by Status",
+   "label": "Invoices by Status"
+  },
+  {
+   "chart_name": "VB Invoice Amount by Month",
+   "label": "Amount by Month"
+  }
+ ],
+ "content": "[{\"id\":\"hdr\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Vendor Billing</span>\",\"col\":12}},{\"id\":\"nc1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending Invoices\",\"col\":3}},{\"id\":\"nc2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Invoices On Hold\",\"col\":3}},{\"id\":\"nc3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"KYC Queue\",\"col\":3}},{\"id\":\"nc4\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Active Vendors\",\"col\":3}},{\"id\":\"nc8\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending Amount\",\"col\":3}},{\"id\":\"nc5\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Registrations\",\"col\":3}},{\"id\":\"nc6\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Profile Changes\",\"col\":3}},{\"id\":\"nc7\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Expiring Agreements\",\"col\":3}},{\"id\":\"ch1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Invoices by Status\",\"col\":6}},{\"id\":\"ch2\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Amount by Month\",\"col\":6}},{\"id\":\"sc-vendors\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Vendors\",\"col\":3}},{\"id\":\"sc-invoices\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Invoices\",\"col\":3}},{\"id\":\"sc-kyc\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"KYC\",\"col\":3}},{\"id\":\"sc-agreements\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Agreements\",\"col\":3}},{\"id\":\"cards\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters\",\"col\":4}},{\"id\":\"cards2\",\"type\":\"card\",\"data\":{\"card_name\":\"Operations\",\"col\":4}},{\"id\":\"cards3\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"cards4\",\"type\":\"card\",\"data\":{\"card_name\":\"Settings\",\"col\":4}}]",
+ "creation": "2026-09-12 13:00:00",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "receipt",
+ "idx": 0,
+ "indicator_color": "blue",
+ "is_hidden": 0,
+ "label": "Vendor Billing",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Masters",
+   "link_count": 3,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Hubs",
+   "link_count": 0,
+   "link_to": "VB Hub",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Billing Categories",
+   "link_count": 0,
+   "link_to": "VB Billing Category",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Vendors",
+   "link_count": 0,
+   "link_to": "VB Vendor",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Operations",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Invoices",
+   "link_count": 0,
+   "link_to": "VB Invoice",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Agreements",
+   "link_count": 0,
+   "link_to": "VB Agreement",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "KYC",
+   "link_count": 0,
+   "link_to": "VB Vendor KYC",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Registrations",
+   "link_count": 0,
+   "link_to": "VB Vendor Registration Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Profile changes",
+   "link_count": 0,
+   "link_to": "VB Vendor Profile Change Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 3,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Invoice Remarks",
+   "link_count": 0,
+   "link_to": "Invoice Remarks",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Payment Pipeline",
+   "link_count": 0,
+   "link_to": "Payment Pipeline",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Archived Records",
+   "link_count": 0,
+   "link_to": "Archived Records",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Settings",
+   "link_count": 3,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Company Profile",
+   "link_count": 0,
+   "link_to": "VB Company Profile",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Notification Settings",
+   "link_count": 0,
+   "link_to": "VB Notification Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "File Storage",
+   "link_count": 0,
+   "link_to": "VB File Storage Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-09-12 16:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "Vendor Billing",
+ "name": "Vendor Billing",
+ "number_cards": [
+  {
+   "label": "Pending Invoices",
+   "number_card_name": "VB Pending Invoices"
+  },
+  {
+   "label": "Invoices On Hold",
+   "number_card_name": "VB Invoices On Hold"
+  },
+  {
+   "label": "KYC Queue",
+   "number_card_name": "VB KYC Queue"
+  },
+  {
+   "label": "Active Vendors",
+   "number_card_name": "VB Active Vendors"
+  },
+  {
+   "label": "Pending Amount",
+   "number_card_name": "VB Pending Invoice Amount"
+  },
+  {
+   "label": "Registrations",
+   "number_card_name": "VB Pending Registrations"
+  },
+  {
+   "label": "Profile Changes",
+   "number_card_name": "VB Pending Profile Changes"
+  },
+  {
+   "label": "Expiring Agreements",
+   "number_card_name": "VB Expiring Agreements"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [],
+ "restrict_to_domain": "",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "VB Admin"
+  },
+  {
+   "role": "VB AP Operator"
+  },
+  {
+   "role": "VB Vendor Manager"
+  },
+  {
+   "role": "VB Hub Master"
+  },
+  {
+   "role": "VB Auditor"
+  },
+  {
+   "role": "VB Viewer"
+  }
+ ],
+ "sequence_id": 10.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Vendors",
+   "link_to": "VB Vendor",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Invoices",
+   "link_to": "VB Invoice",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "KYC",
+   "link_to": "VB Vendor KYC",
+   "type": "DocType"
+  },
+  {
+   "color": "Purple",
+   "doc_view": "List",
+   "label": "Agreements",
+   "link_to": "VB Agreement",
+   "type": "DocType"
+  }
+ ],
+ "title": "Vendor Billing",
+ "type": "Workspace"
+}

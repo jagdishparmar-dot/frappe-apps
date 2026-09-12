@@ -1,0 +1,21 @@
+{
+ "app": "vendor_billing",
+ "creation": "2026-09-12 16:45:00.000000",
+ "docstatus": 0,
+ "doctype": "Desktop Icon",
+ "hidden": 0,
+ "icon": "receipt",
+ "icon_type": "App",
+ "idx": 0,
+ "label": "Vendor Billing",
+ "link_to": "Vendor Billing",
+ "link_type": "Workspace Sidebar",
+ "logo_url": "/assets/vendor_billing/images/vendor-billing.svg",
+ "modified": "2026-09-12 16:45:00.000000",
+ "modified_by": "Administrator",
+ "name": "Vendor Billing",
+ "owner": "Administrator",
+ "restrict_removal": 0,
+ "roles": [],
+ "standard": 1
+}

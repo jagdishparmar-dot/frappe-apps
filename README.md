@@ -38,6 +38,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 
 ```
 apps/vendor_directory/   # Frappe admin app + portal APIs
+apps/vendor_billing/     # Frappe vendor billing Desk app
 frontend/vendor-web/     # Vendor Portal (Next.js)
 docker/                  # Images + nginx templates
 docs/COOLIFY_DEPLOY.md   # Coolify production guide

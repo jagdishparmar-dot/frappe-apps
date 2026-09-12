@@ -1,0 +1,130 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-09-12 13:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "notify_company_on_invoice_upload",
+  "notify_vendor_on_registration",
+  "notify_vendor_on_kyc_verified",
+  "notify_vendor_on_invoice_status_change",
+  "portal_origin"
+ ],
+ "fields": [
+  {
+   "fieldname": "notify_company_on_invoice_upload",
+   "fieldtype": "Check",
+   "label": "Email company on invoice upload",
+   "default": "1"
+  },
+  {
+   "fieldname": "notify_vendor_on_registration",
+   "fieldtype": "Check",
+   "label": "Email vendor on registration",
+   "default": "1"
+  },
+  {
+   "fieldname": "notify_vendor_on_kyc_verified",
+   "fieldtype": "Check",
+   "label": "Email vendor when KYC is verified",
+   "default": "1"
+  },
+  {
+   "fieldname": "notify_vendor_on_invoice_status_change",
+   "fieldtype": "Check",
+   "label": "Email vendor on invoice status change",
+   "default": "1"
+  },
+  {
+   "fieldname": "portal_origin",
+   "fieldtype": "Data",
+   "label": "Portal Origin",
+   "description": "Public Next.js origin for share links, e.g. https://vendors.example.com"
+  }
+ ],
+ "idx": 0,
+ "index_web_pages_for_search": 0,
+ "istable": 0,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-09-12 13:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Vendor Billing",
+ "name": "VB Notification Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "select": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "VB Admin",
+   "read": 1,
+   "select": 1,
+   "create": 1,
+   "write": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1
+  },
+  {
+   "role": "VB Vendor Manager",
+   "read": 1,
+   "select": 1,
+   "create": 0,
+   "write": 1,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0
+  },
+  {
+   "role": "VB Viewer",
+   "read": 1,
+   "select": 1,
+   "create": 0,
+   "write": 0,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0
+  },
+  {
+   "role": "VB Auditor",
+   "read": 1,
+   "select": 1,
+   "create": 0,
+   "write": 0,
+   "delete": 0,
+   "report": 1,
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 0
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "editable_grid": 0,
+ "naming_rule": ""
+}

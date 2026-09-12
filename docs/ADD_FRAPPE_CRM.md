@@ -2,11 +2,12 @@
 
 [Frappe CRM](https://github.com/frappe/crm) is the official open-source CRM. It runs on **plain Frappe v15/v16** (ERPNext is optional for extra integrations).
 
-This stack can install **both** apps on the same site:
+This stack can install custom apps and CRM on the same site:
 
 | App | Role |
 |-----|------|
 | `vendor_directory` | Vendor master, portal users, KYC (Desk + Next.js portal) |
+| `vendor_billing` | Vendor billing Desk app (agreements, invoices, KYC workflow) |
 | `crm` | Leads / Deals / CRM UI at `/crm` |
 
 They share one Frappe site, one DB, and the same Desk login.
@@ -16,11 +17,11 @@ They share one Frappe site, one DB, and the same Desk login.
 ## How it is wired
 
 1. **Image build** (`docker/frappe/Dockerfile`)  
-   - Always copies/installs `vendor_directory`  
+   - Always copies/installs `vendor_directory` and `vendor_billing`  
    - If `INSTALL_CRM=1` (default): `bench get-app crm` + build CRM frontend assets  
 
 2. **Site bootstrap** (`docker/frappe/create-site.sh`)  
-   - New site: `--install-app vendor_directory --install-app crm`  
+   - New site: `--install-app vendor_directory --install-app vendor_billing --install-app crm`  
    - Existing site: `install-app` each app (idempotent) + `migrate`  
 
 3. **Compose / Coolify env**  
@@ -56,11 +57,11 @@ First CRM build is slower (Node frontend assets).
 
 | URL | App |
 |-----|-----|
-| `https://desk…/app` | Desk (Vendor Directory workspace + modules) |
+| `https://desk…/app` | Desk (Vendor Directory + Vendor Billing workspaces) |
 | `https://desk…/crm` | Frappe CRM SPA |
 | `https://portal…` | Vendor Portal (unchanged) |
 
-Desk apps switcher should list **CRM** and **Vendor Directory**.
+Desk apps switcher should list **CRM**, **Vendor Directory**, and **Vendor Billing**.
 
 ---
 

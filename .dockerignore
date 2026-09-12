@@ -8,3 +8,4 @@
 docs
 *.md
 !apps/vendor_directory/README.md
+!apps/vendor_billing/README.md

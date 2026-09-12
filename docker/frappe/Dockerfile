@@ -1,4 +1,4 @@
-# Plain Frappe + vendor_directory (+ optional Frappe CRM)
+# Plain Frappe + vendor_directory + vendor_billing (+ optional Frappe CRM)
 ARG FRAPPE_VERSION=v16
 FROM frappe/build:${FRAPPE_VERSION} AS builder
 
@@ -24,15 +24,17 @@ RUN bench init \
   && find apps -mindepth 1 -path "*/.git" | xargs rm -fr
 
 COPY --chown=frappe:frappe apps/vendor_directory /home/frappe/frappe-bench/apps/vendor_directory
+COPY --chown=frappe:frappe apps/vendor_billing /home/frappe/frappe-bench/apps/vendor_billing
 
 RUN cd /home/frappe/frappe-bench \
   && ./env/bin/pip install --quiet --no-cache-dir -e apps/vendor_directory \
+  && ./env/bin/pip install --quiet --no-cache-dir -e apps/vendor_billing \
   && if [ "${INSTALL_CRM}" = "1" ]; then \
        bench get-app crm https://github.com/frappe/crm --branch "${CRM_BRANCH}" \
        && ./env/bin/pip install --quiet --no-cache-dir -e apps/crm \
-       && bench build --app frappe --app crm; \
+       && bench build --app frappe --app vendor_billing --app crm; \
      else \
-       bench build --app frappe; \
+       bench build --app frappe --app vendor_billing; \
      fi \
   && find apps -mindepth 1 -path "*/.git" | xargs rm -fr || true
 
