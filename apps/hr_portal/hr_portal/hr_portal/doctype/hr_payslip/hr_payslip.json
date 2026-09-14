@@ -1,0 +1,116 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-09-12 23:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "payroll_run",
+  "employee",
+  "month",
+  "payable_days",
+  "working_days",
+  "present_days",
+  "leave_days",
+  "gross",
+  "deductions_total",
+  "net_pay",
+  "lines"
+ ],
+ "fields": [
+  {
+   "fieldname": "payroll_run",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Payroll Run",
+   "options": "HR Payroll Run",
+   "reqd": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "HR Employee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "month",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Month",
+   "reqd": 1
+  },
+  {
+   "fieldname": "payable_days",
+   "fieldtype": "Float",
+   "label": "Payable Days",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "working_days",
+   "fieldtype": "Int",
+   "label": "Working Days",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "present_days",
+   "fieldtype": "Int",
+   "label": "Present Days",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "leave_days",
+   "fieldtype": "Int",
+   "label": "Leave Days",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "gross",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Gross",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "deductions_total",
+   "fieldtype": "Currency",
+   "label": "Deductions",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "net_pay",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Net Pay",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "lines",
+   "fieldtype": "Table",
+   "label": "Breakdown",
+   "options": "HR Payslip Line"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-12 23:00:00",
+ "modified_by": "Administrator",
+ "module": "HR Portal",
+ "name": "HR Payslip",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "System Manager", "write": 1},
+  {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "HR Admin", "write": 1},
+  {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "HR Payroll Admin", "write": 1},
+  {"read": 1, "role": "HR Employee"}
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

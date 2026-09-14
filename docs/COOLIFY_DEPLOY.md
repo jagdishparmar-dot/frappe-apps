@@ -1,11 +1,11 @@
-# Deploy Vendor Directory on Coolify
+# Deploy Vendor Billing + HR Portal on Coolify
 
-This stack runs **two public apps** behind Coolify’s proxy (Traefik/Caddy). Coolify assigns domains and TLS; you do **not** use the local `gateway` service in production.
+This stack runs **Frappe Desk** behind Coolify’s proxy (Traefik/Caddy). Coolify assigns a domain and TLS.
+The same domain also serves the **HR Portal SPA** at `/hr` and (optionally) **Frappe CRM** at `/crm`.
 
 | Coolify service | Role | Internal port |
 |-----------------|------|----------------|
-| **vendor-web** | Vendor Portal (Next.js) | `3000` |
-| **frappe-nginx** | Frappe Desk + API + socket.io | `8080` |
+| **frappe-nginx** | Frappe Desk + HR SPA (`/hr`) + API + socket.io | `8080` |
 
 Everything else (`db`, Redis, `backend`, workers, websocket, scheduler) stays **private** — do not attach domains to them.
 
@@ -15,8 +15,7 @@ Everything else (`db`, Redis, `backend`, workers, websocket, scheduler) stays **
 
 - Coolify server with Docker (proxy enabled)
 - Git repo with this project (Coolify **Docker Compose** build pack)
-- Two DNS records pointing at the Coolify server (or wildcard):
-  - `portal.yourdomain.com` → Vendor Portal
+- One DNS record pointing at the Coolify server:
   - `desk.yourdomain.com` → Frappe Desk
 - At least **4 GB RAM** recommended (Frappe image build is heavy)
 
@@ -41,8 +40,6 @@ In Coolify → **Environment Variables**, set at least:
 | `ADMIN_PASSWORD` | long random secret | Frappe `Administrator` |
 | `FRAPPE_SITE_NAME` | `desk.yourdomain.com` | **Must equal Desk hostname** (no `https://`) |
 | `SITE_HOST_NAME` | `https://desk.yourdomain.com` | Public HTTPS origin for Frappe |
-| `COOKIE_SECURE` | `true` | Portal cookies over HTTPS |
-| `NEXT_PUBLIC_APP_NAME` | `Vendor Directory` | Optional |
 | `FRAPPE_VERSION` | `v16` | Optional |
 | `FRAPPE_BRANCH` | `version-16` | Optional |
 
@@ -61,12 +58,11 @@ Frappe’s site folder is named after `FRAPPE_SITE_NAME`. Nginx and socket.io al
 
 After Coolify parses the stack:
 
-1. Open service **vendor-web** → Domains → `https://portal.yourdomain.com` → port **3000**
-2. Open service **frappe-nginx** → Domains → `https://desk.yourdomain.com` → port **8080**
+1. Open service **frappe-nginx** → Domains → `https://desk.yourdomain.com` → port **8080**
 
 Ensure WebSocket / HTTPS is allowed for the Desk domain (Coolify proxy handles `/socket.io` on the same host).
 
-Compose publishes container ports `3000` / `8080` without binding a fixed host port, so Coolify’s proxy can route to them.
+Compose publishes container port `8080` without binding a fixed host port, so Coolify’s proxy can route to it.
 
 ---
 
@@ -77,23 +73,23 @@ Compose publishes container ports `3000` / `8080` without binding a fixed host p
 3. Watch logs for:
    - `configurator` completed
    - `create-site` → `Site bootstrap complete`
-   - `backend` / `frappe-nginx` / `vendor-web` healthy
+   - `backend` / `frappe-nginx` healthy
 
 ### First-boot checklist
 
 | Check | How |
 |-------|-----|
 | Desk | `https://desk.yourdomain.com` → login `Administrator` / `ADMIN_PASSWORD` |
-| Portal | `https://portal.yourdomain.com/login` |
+| HR Portal SPA | `https://desk.yourdomain.com/hr` → login with a user that has an HR role |
 | API ping | `https://desk.yourdomain.com/api/method/ping` → `{"message":"pong"}` |
 
 ---
 
 ## 6. Post-deploy admin steps
 
-1. Desk → **Vendor Directory** → **Vendor** → create a vendor  
-2. **Create Portal User** (email + password)  
-3. Vendor opens portal URL and signs in  
+1. Desk → **Vendor Billing** → create vendors, agreements, invoices  
+2. Review KYC and payment workflow in Desk  
+3. HR Portal → open `/hr` (users need an HR role: HR Admin / HR Manager / HR Employee, assigned in Desk → User)  
 
 ---
 
@@ -104,15 +100,12 @@ Internet
    │
    ▼
 Coolify Proxy (TLS)
-   ├── portal.yourdomain.com  →  vendor-web:3000
    └── desk.yourdomain.com    →  frappe-nginx:8080
                                     ├── backend:8000
                                     └── websocket:9000
                                          │
                               db / redis-cache / redis-queue
 ```
-
-Portal talks to Frappe **server-side** via `FRAPPE_URL=http://backend:8000` (internal Docker network). Browsers never need that URL.
 
 ---
 
@@ -138,11 +131,20 @@ Back up **`db-data` + `sites`** before major upgrades.
 3. `create-site` is idempotent: existing site → migrate only  
 4. After code changes to the Frappe app, ensure migrate ran (check `create-site` / `backend` logs)
 
+> **One-time migration — CRM removal:** the image no longer fetches Frappe CRM
+> from GitHub. If the site previously had `crm` installed, uninstall it **before**
+> the first deploy of this image, or `migrate` will fail on the missing app code:
+>
+> ```bash
+> docker compose exec backend bench --site <site> uninstall-app crm --yes --no-backup
+> ```
+>
+> (Drops CRM tables. To keep CRM, add it as `apps/crm` instead — see
+> [ADD_FRAPPE_CRM.md](ADD_FRAPPE_CRM.md).)
+
 ---
 
-## 10. Local development (unchanged)
-
-Use the **dev overlay** (ports + gateway):
+## 10. Local development
 
 ```bash
 cp .env.example .env
@@ -151,11 +153,9 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 
 | URL | Service |
 |-----|---------|
-| http://localhost/ | Portal via gateway |
-| http://localhost:3000 | Portal direct |
 | http://localhost:8080 | Desk |
 
-Keep `COOKIE_SECURE=false` and `FRAPPE_SITE_NAME=vendors.localhost` locally.
+Keep `FRAPPE_SITE_NAME=vendors.localhost` locally.
 
 ---
 
@@ -164,10 +164,8 @@ Keep `COOKIE_SECURE=false` and `FRAPPE_SITE_NAME=vendors.localhost` locally.
 | Symptom | Fix |
 |---------|-----|
 | Desk blank / wrong site | `FRAPPE_SITE_NAME` ≠ domain Host header. Align both; recreate `sites` if created with wrong name. |
-| Portal login fails | Confirm `FRAPPE_SITE_NAME` matches Desk site; check `vendor-web` → Frappe `backend:8000` logs. |
-| Cookies not sticking | Set `COOKIE_SECURE=true` only on HTTPS; clear old cookies. |
 | Socket.io / realtime errors | Desk domain must serve `/socket.io`; Host/Origin use `FRAPPE_SITE_NAME`. |
-| 502 / No Available Server | Service unhealthy or wrong port on Coolify domain (must be 3000 / 8080). |
+| 502 / No Available Server | Service unhealthy or wrong port on Coolify domain (must be 8080). |
 | Build OOM | Use a larger Coolify server or remote build server. |
 | `create-site` stuck | Check `db` healthy + Redis; inspect `create-site` logs. |
 | `The string https:// is no valid url` | Incomplete Coolify/env URL. Set full `SITE_HOST_NAME=https://desk…` (or leave empty until domains exist). Redeploy after pulling latest compose (empty `SERVICE_URL_*` magic vars were removed). |
@@ -187,8 +185,7 @@ Only if you must change `FRAPPE_SITE_NAME` and accept data loss:
 ## 12. Security checklist
 
 - [ ] Strong `MYSQL_ROOT_PASSWORD` and `ADMIN_PASSWORD`  
-- [ ] Desk and Portal on HTTPS domains  
-- [ ] `COOKIE_SECURE=true`  
+- [ ] Desk on an HTTPS domain  
 - [ ] No domains on DB / Redis / backend  
 - [ ] Restrict who can access Desk (VPN / IP allowlist / SSO if needed)  
 

@@ -1,0 +1,60 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-09-12 12:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "holiday_date",
+  "holiday_name",
+  "region"
+ ],
+ "fields": [
+  {
+   "fieldname": "holiday_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "holiday_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Holiday Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "region",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Region"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-12 12:00:00",
+ "modified_by": "Administrator",
+ "module": "HR Portal",
+ "name": "HR Holiday",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "System Manager", "write": 1},
+  {"create": 1, "delete": 1, "read": 1, "report": 1, "role": "HR Admin", "write": 1},
+  {"create": 1, "read": 1, "report": 1, "role": "HR Manager", "write": 1},
+  {"read": 1, "role": "HR Payroll Admin"},
+  {"read": 1, "role": "HR Reporting Manager"},
+  {"read": 1, "role": "HR Employee"}
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "holiday_name,region",
+ "sort_field": "holiday_date",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "holiday_name",
+ "track_changes": 1
+}

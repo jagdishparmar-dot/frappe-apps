@@ -1,0 +1,105 @@
+{
+ "actions": [],
+ "creation": "2026-09-12 18:00:00",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "segment_index",
+  "clock_in_time",
+  "clock_in_timestamp",
+  "clock_out_time",
+  "clock_out_timestamp",
+  "is_open",
+  "site",
+  "device_id",
+  "punch_in_lat",
+  "punch_in_long",
+  "punch_out_lat",
+  "punch_out_long"
+ ],
+ "fields": [
+  {
+   "fieldname": "segment_index",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Segment Index",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "clock_in_time",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Clock In Time"
+  },
+  {
+   "fieldname": "clock_in_timestamp",
+   "fieldtype": "Datetime",
+   "label": "Clock In Timestamp"
+  },
+  {
+   "fieldname": "clock_out_time",
+   "fieldtype": "Data",
+   "label": "Clock Out Time"
+  },
+  {
+   "fieldname": "clock_out_timestamp",
+   "fieldtype": "Datetime",
+   "label": "Clock Out Timestamp"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_open",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Open"
+  },
+  {
+   "fieldname": "site",
+   "fieldtype": "Link",
+   "label": "Site",
+   "options": "HR Site"
+  },
+  {
+   "fieldname": "device_id",
+   "fieldtype": "Data",
+   "label": "Device ID"
+  },
+  {
+   "fieldname": "punch_in_lat",
+   "fieldtype": "Float",
+   "label": "Punch In Lat",
+   "precision": "6"
+  },
+  {
+   "fieldname": "punch_in_long",
+   "fieldtype": "Float",
+   "label": "Punch In Long",
+   "precision": "6"
+  },
+  {
+   "fieldname": "punch_out_lat",
+   "fieldtype": "Float",
+   "label": "Punch Out Lat",
+   "precision": "6"
+  },
+  {
+   "fieldname": "punch_out_long",
+   "fieldtype": "Float",
+   "label": "Punch Out Long",
+   "precision": "6"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-12 18:00:00",
+ "modified_by": "Administrator",
+ "module": "HR Portal",
+ "name": "HR Punch Segment",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -5,7 +5,10 @@
 **/.env.*
 **/__pycache__
 **/*.pyc
+.tmp
 docs
 *.md
-!apps/vendor_directory/README.md
 !apps/vendor_billing/README.md
+!apps/hr_portal/README.md
+# Built in-image by vite (emptyOutDir) — don't ship stale local build output
+apps/hr_portal/hr_portal/public/frontend

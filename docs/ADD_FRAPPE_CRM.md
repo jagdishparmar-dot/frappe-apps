@@ -1,55 +1,72 @@
-# Adding Frappe CRM with Vendor Directory
+# Adding apps (Frappe CRM, custom apps) via the `apps/` folder
 
-[Frappe CRM](https://github.com/frappe/crm) is the official open-source CRM. It runs on **plain Frappe v15/v16** (ERPNext is optional for extra integrations).
+This stack no longer fetches apps from GitHub at build time. **Every app folder
+under `./apps` is baked into the image, built, and installed on the site
+automatically** — no Dockerfile, compose, or `create-site.sh` changes needed.
 
-This stack can install custom apps and CRM on the same site:
+Current apps:
 
 | App | Role |
 |-----|------|
-| `vendor_directory` | Vendor master, portal users, KYC (Desk + Next.js portal) |
-| `vendor_billing` | Vendor billing Desk app (agreements, invoices, KYC workflow) |
-| `crm` | Leads / Deals / CRM UI at `/crm` |
+| `vendor_billing` | Vendors, agreements, invoices, KYC (Desk + portal APIs) |
+| `hr_portal` | HR + attendance SPA at `/hr` (custom Vue frontend, same pattern as CRM) |
 
 They share one Frappe site, one DB, and the same Desk login.
 
 ---
 
-## How it is wired
+## Add an app
 
-1. **Image build** (`docker/frappe/Dockerfile`)  
-   - Always copies/installs `vendor_directory` and `vendor_billing`  
-   - If `INSTALL_CRM=1` (default): `bench get-app crm` + build CRM frontend assets  
+1. Put the app in `apps/` — folder name must equal the app name:
 
-2. **Site bootstrap** (`docker/frappe/create-site.sh`)  
-   - New site: `--install-app vendor_directory --install-app vendor_billing --install-app crm`  
-   - Existing site: `install-app` each app (idempotent) + `migrate`  
+   ```bash
+   # example: Frappe CRM
+   git clone https://github.com/frappe/crm apps/crm        # or: git submodule add ...
+   ```
 
-3. **Compose / Coolify env**  
-   - `INSTALL_CRM=1` (build arg + runtime)  
-   - `CRM_BRANCH=main` (stable for Frappe v16)
+2. Rebuild and redeploy:
 
----
+   ```bash
+   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
+   ```
 
-## Enable / rebuild
+That's it. The image build pip-installs every `apps/*` folder that has a
+`pyproject.toml`, builds its assets, and `create-site` runs
+`install-app <name>` + `migrate` on the site (idempotent — safe on redeploys).
 
-### Local
+### App requirements (the contract)
+
+- Folder name = app name (`apps/hr_portal` → app `hr_portal`).
+- `pyproject.toml` present (standard bench app layout).
+- **Custom frontend / SPA:** add a root `package.json` with a `build` script —
+  `bench build` then builds it automatically (same as `hr_portal` and `crm`):
+
+  ```json
+  {
+    "private": true,
+    "scripts": {
+      "postinstall": "cd frontend && yarn install --check-files",
+      "build": "cd frontend && yarn build"
+    }
+  }
+  ```
+
+  Also commit a minimal `yarn.lock` so the build's
+  `yarn install --frozen-lockfile` succeeds (see `apps/hr_portal/yarn.lock`).
+
+### Removing an app
+
+Delete the folder from `apps/`, rebuild — **but first uninstall it from the
+site** or `migrate` will fail on the missing app code:
 
 ```bash
-# .env
-INSTALL_CRM=1
-CRM_BRANCH=main
-
-docker compose -f docker-compose.yml -f docker-compose.dev.yml build --no-cache
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+docker compose exec backend bench --site <site> uninstall-app <app> --yes --no-backup
 ```
 
-### Coolify
-
-1. Set env: `INSTALL_CRM=1`, `CRM_BRANCH=main`  
-2. **Rebuild** the Frappe image (required — CRM is baked into the image)  
-3. Redeploy so `create-site` installs/migrates `crm` on the site  
-
-First CRM build is slower (Node frontend assets).
+> **One-time note for sites that had CRM:** CRM was previously fetched from
+> GitHub and installed by default. Before deploying the apps-folder image to an
+> existing site, run `uninstall-app crm` as above (this drops CRM tables).
+> To keep using CRM, move it into `apps/crm` instead — then nothing changes.
 
 ---
 
@@ -57,30 +74,14 @@ First CRM build is slower (Node frontend assets).
 
 | URL | App |
 |-----|-----|
-| `https://desk…/app` | Desk (Vendor Directory + Vendor Billing workspaces) |
-| `https://desk…/crm` | Frappe CRM SPA |
-| `https://portal…` | Vendor Portal (unchanged) |
-
-Desk apps switcher should list **CRM**, **Vendor Directory**, and **Vendor Billing**.
-
----
-
-## Disable CRM
-
-```bash
-INSTALL_CRM=0
-```
-
-Rebuild the image. Existing sites keep CRM data unless you uninstall:
-
-```bash
-bench --site <site> uninstall-app crm
-```
+| `https://desk…/app` | Desk (Vendor Billing workspace) |
+| `https://desk…/hr` | HR Portal SPA |
+| `https://desk…/crm` | Frappe CRM SPA (if `apps/crm` present) |
 
 ---
 
 ## Notes
 
-- **ERPNext** is not required for CRM core. Optional ERPNext hooks activate only if ERPNext is installed later.  
-- **Vendor ↔ CRM linking** (e.g. Vendor → CRM Organization) is not automatic; add custom fields/links later if you need that.  
-- Existing Coolify volumes: rebuild image, then redeploy — `create-site` will `install-app crm` on the existing site.  
+- **ERPNext** is not required for CRM core. Optional ERPNext hooks activate only if ERPNext is installed later.
+- **Vendor ↔ CRM linking** (e.g. Vendor → CRM Organization) is not automatic; add custom fields/links later if you need that.
+- Large third-party apps (CRM) make image builds slower (Node frontend assets) — the yarn cache mount keeps rebuilds fast.

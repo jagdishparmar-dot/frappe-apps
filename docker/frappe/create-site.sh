@@ -6,8 +6,6 @@ ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
 DB_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-admin}"
 # Public origin used by Frappe behind Coolify / reverse proxy, e.g. https://desk.example.com
 SITE_HOST_NAME="${SITE_HOST_NAME:-}"
-# Install Frappe CRM on the site when the app is present in the image (default: yes)
-INSTALL_CRM="${INSTALL_CRM:-1}"
 # Write into the sites volume (owned by frappe). The anonymous /shared volume is root-owned.
 CREDENTIALS_FILE="${CREDENTIALS_FILE:-/home/frappe/frappe-bench/sites/credentials.json}"
 
@@ -32,16 +30,15 @@ done
 
 echo "common_site_config.json ready"
 
-install_apps=(vendor_directory)
-if [[ -d "apps/vendor_billing" ]]; then
-  install_apps+=(vendor_billing)
-else
-  echo "WARNING: apps/vendor_billing missing from the image — rebuild the Frappe image"
-fi
-if [[ "${INSTALL_CRM}" == "1" && -d "apps/crm" ]]; then
-  install_apps+=(crm)
-elif [[ "${INSTALL_CRM}" == "1" ]]; then
-  echo "WARNING: INSTALL_CRM=1 but apps/crm is missing from the image — rebuild with INSTALL_CRM=1"
+# Install every app baked into the image (apps/ folder in the build context).
+# Adding an app = adding its folder to apps/ at build time — no changes needed here.
+install_apps=()
+for app in $(ls -1 apps); do
+  [[ "${app}" == "frappe" ]] && continue
+  install_apps+=("${app}")
+done
+if [[ ${#install_apps[@]} -eq 0 ]]; then
+  echo "WARNING: no apps found in the image — expected at least one under apps/"
 fi
 
 install_app_flags=()
@@ -83,7 +80,8 @@ if [[ -n "${SITE_HOST_NAME}" && "${SITE_HOST_NAME}" != "https://" && "${SITE_HOS
 fi
 
 echo "Writing optional API credentials file (not required for UI login)"
-bench --site "${SITE_NAME}" execute vendor_directory.bootstrap.write_api_credentials \
-  --kwargs "{\"path\": \"${CREDENTIALS_FILE}\"}" || echo "Skipped API credential write"
+python3 /home/frappe/write-api-credentials.py \
+  --site "${SITE_NAME}" \
+  --path "${CREDENTIALS_FILE}" || echo "Skipped API credential write"
 
 echo "Site bootstrap complete (apps: ${install_apps[*]})"

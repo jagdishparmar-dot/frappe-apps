@@ -1,7 +1,8 @@
 # Vendor Directory — Draft Design & Docker Deployment
 
-> **Status:** Scaffolded (P1–P3 started)  
-> **Stack:** Next.js (frontend) · Frappe Framework (backend/API) · Docker Compose  
+> **Superseded:** The `vendor_directory` Frappe app and Next.js `frontend/vendor-web` were removed. Use **`vendor_billing`** (`apps/vendor_billing`) for Desk + portal APIs.  
+> **Status:** Historical draft only  
+> **Stack:** Frappe Framework (backend/API) · Docker Compose  
 > **Date:** 2026-09-05
 
 ---

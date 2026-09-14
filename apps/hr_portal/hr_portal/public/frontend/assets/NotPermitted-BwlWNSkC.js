@@ -1,0 +1,2 @@
+import{o as e,aa as t,y as a,u as s,bt as r}from"./index-ChSHIHB5.js";const o={class:"flex min-h-screen items-center justify-center bg-surface-gray-1 p-6"},m={__name:"NotPermitted",setup(c){return(n,i)=>(e(),t("div",o,[a(s(r),{theme:"red",title:"Not permitted",description:"You do not have access to this HR portal area."})]))}};export{m as default};
+//# sourceMappingURL=NotPermitted-BwlWNSkC.js.map

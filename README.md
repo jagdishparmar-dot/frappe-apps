@@ -1,11 +1,12 @@
-# Vendor Directory
+# Vendor Billing + HR Portal
 
-**Frappe Desk** = admin (create vendors, register portal logins, review KYC)  
-**Next.js Vendor Portal** = vendor self-service (login, update profile, upload KYC docs)
+**Frappe Desk** = admin via **Vendor Billing** (vendors, agreements, invoices, KYC). Portal APIs live on the Frappe site (`vendor_billing.portal.*`); deploy any separate vendor UI elsewhere if needed.
+
+**HR Portal** = Frappe app with a custom Vue SPA (like Frappe CRM) served at **`/hr`** on the Desk domain — employees, attendance, leave, shifts, payroll.
 
 ## Deploy on Coolify
 
-See **[docs/COOLIFY_DEPLOY.md](docs/COOLIFY_DEPLOY.md)** — Coolify proxy assigns domains to `vendor-web` and `frappe-nginx`.
+See **[docs/COOLIFY_DEPLOY.md](docs/COOLIFY_DEPLOY.md)** — Coolify proxy assigns a domain to `frappe-nginx`.
 
 ## Local quick start
 
@@ -16,37 +17,31 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 
 | URL | Who |
 |-----|-----|
-| http://localhost/ | Vendor Portal (gateway) |
-| http://localhost:3000 | Vendor Portal (direct) |
 | http://localhost:8080 | Frappe Desk (admin) |
+| http://localhost:8080/hr | HR Portal SPA (HR roles) |
 
 **Desk:** `Administrator` / `ADMIN_PASSWORD` (default in `.env.example` is `changeme`)
 
-### Admin setup for a vendor
+### Admin setup
 
-1. Desk → **Vendor** → New  
-2. Save → **Create Portal User** (login email + password)  
-3. Share credentials with the vendor  
-
-### Vendor portal
-
-1. Open http://localhost/login  
-2. Sign in with portal login ID  
-3. Update **My Profile**, upload **KYC Documents**, **Submit for KYC review**
+1. Desk → **VB Vendor** → New  
+2. Review KYC, agreements, and invoices in Vendor Billing  
 
 ## Layout
 
 ```
-apps/vendor_directory/   # Frappe admin app + portal APIs
-apps/vendor_billing/     # Frappe vendor billing Desk app
-frontend/vendor-web/     # Vendor Portal (Next.js)
-docker/                  # Images + nginx templates
+apps/                    # Every app folder here is built + installed automatically
+apps/vendor_billing/     # Frappe Vendor Billing Desk app + portal APIs
+apps/hr_portal/          # Frappe HR Portal app + Vue SPA frontend (/hr)
+docker/                  # Frappe image + nginx templates
 docs/COOLIFY_DEPLOY.md   # Coolify production guide
-docs/ADD_FRAPPE_CRM.md   # Install official Frappe CRM alongside this stack
+docs/ADD_FRAPPE_CRM.md   # Add Frappe CRM (or any app) via the apps/ folder
 docker-compose.yml       # Coolify / production compose
-docker-compose.dev.yml   # Local ports + gateway overlay
+docker-compose.dev.yml   # Local published Desk port
 ```
 
-## Optional: Frappe CRM
+## Adding an app (incl. Frappe CRM)
 
-Set `INSTALL_CRM=1` (default) and rebuild — see [docs/ADD_FRAPPE_CRM.md](docs/ADD_FRAPPE_CRM.md). CRM UI: `/crm` on the Desk domain.
+Drop any valid Frappe app folder into `apps/` (folder name = app name, with
+`pyproject.toml`) and rebuild — the image installs and builds it automatically,
+and `create-site` installs it on the site. See [docs/ADD_FRAPPE_CRM.md](docs/ADD_FRAPPE_CRM.md).

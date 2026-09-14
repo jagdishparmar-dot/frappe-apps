@@ -1,0 +1,483 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:employee_code",
+ "creation": "2026-09-12 00:00:00",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "identity_section",
+  "employee_code",
+  "employee_name",
+  "column_break_identity",
+  "status",
+  "portal_role",
+  "must_change_password",
+  "image",
+  "user_section",
+  "user",
+  "email",
+  "phone",
+  "employment_section",
+  "employment_type",
+  "vendor",
+  "date_of_joining",
+  "column_break_employment",
+  "department",
+  "designation",
+  "reports_to",
+  "attendance_section",
+  "attendance_policy",
+  "primary_site",
+  "column_break_attendance",
+  "default_shift",
+  "work_shift_start",
+  "work_shift_end",
+  "personal_section",
+  "gender",
+  "date_of_birth",
+  "blood_group",
+  "column_break_personal",
+  "grade",
+  "cost_center",
+  "address_section",
+  "current_address_line_1",
+  "current_address_line_2",
+  "column_break_address",
+  "current_city",
+  "current_state",
+  "current_pincode",
+  "emergency_section",
+  "emergency_contact_name",
+  "emergency_contact_phone",
+  "statutory_section",
+  "pan_number",
+  "aadhaar_number",
+  "column_break_stat",
+  "uan_number",
+  "esi_number",
+  "pf_account_number",
+  "bank_section",
+  "bank_name",
+  "bank_ifsc",
+  "bank_account_number"
+ ],
+ "fields": [
+  {
+   "fieldname": "identity_section",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "employee_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee Code",
+   "unique": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_identity",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Active\nInactive\nInvited",
+   "reqd": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "default": "HR Employee",
+   "fieldname": "portal_role",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Portal Role",
+   "options": "HR Admin\nHR Manager\nHR Payroll Admin\nHR Reporting Manager\nHR Employee",
+   "reqd": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "must_change_password",
+   "fieldtype": "Check",
+   "label": "Must Change Password"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "hidden": 1,
+   "label": "Image"
+  },
+  {
+   "fieldname": "user_section",
+   "fieldtype": "Section Break",
+   "label": "Login"
+  },
+  {
+   "fieldname": "user",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "User",
+   "options": "User",
+   "unique": 1
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "employment_section",
+   "fieldtype": "Section Break",
+   "label": "Employment"
+  },
+  {
+   "default": "Permanent",
+   "fieldname": "employment_type",
+   "fieldtype": "Select",
+   "label": "Employment Type",
+   "options": "Permanent\n3PL\nIntern\nConsultant"
+  },
+  {
+   "fieldname": "vendor",
+   "fieldtype": "Link",
+   "label": "3PL Vendor",
+   "options": "HR Vendor"
+  },
+  {
+   "fieldname": "date_of_joining",
+   "fieldtype": "Date",
+   "label": "Date of Joining"
+  },
+  {
+   "fieldname": "column_break_employment",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Data",
+   "label": "Department"
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Data",
+   "label": "Designation"
+  },
+  {
+   "fieldname": "reports_to",
+   "fieldtype": "Link",
+   "label": "Reports To",
+   "options": "HR Employee"
+  },
+  {
+   "fieldname": "attendance_section",
+   "fieldtype": "Section Break",
+   "label": "Attendance"
+  },
+  {
+   "default": "geofenced",
+   "fieldname": "attendance_policy",
+   "fieldtype": "Select",
+   "label": "Attendance Policy",
+   "options": "geofenced\ngps_logged\nmanual"
+  },
+  {
+   "fieldname": "primary_site",
+   "fieldtype": "Link",
+   "label": "Primary Site",
+   "options": "HR Site"
+  },
+  {
+   "fieldname": "column_break_attendance",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "default_shift",
+   "fieldtype": "Link",
+   "label": "Default Shift",
+   "options": "HR Shift"
+  },
+  {
+   "fieldname": "work_shift_start",
+   "fieldtype": "Data",
+   "label": "Shift Start"
+  },
+  {
+   "fieldname": "work_shift_end",
+   "fieldtype": "Data",
+   "label": "Shift End"
+  },
+  {
+   "fieldname": "personal_section",
+   "fieldtype": "Section Break",
+   "label": "Personal"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Select",
+   "label": "Gender",
+   "options": "\nMale\nFemale\nOther"
+  },
+  {
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date of Birth"
+  },
+  {
+   "fieldname": "blood_group",
+   "fieldtype": "Data",
+   "label": "Blood Group"
+  },
+  {
+   "fieldname": "column_break_personal",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "grade",
+   "fieldtype": "Data",
+   "label": "Grade"
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Data",
+   "label": "Cost Center"
+  },
+  {
+   "fieldname": "address_section",
+   "fieldtype": "Section Break",
+   "label": "Address"
+  },
+  {
+   "fieldname": "current_address_line_1",
+   "fieldtype": "Data",
+   "label": "Address Line 1"
+  },
+  {
+   "fieldname": "current_address_line_2",
+   "fieldtype": "Data",
+   "label": "Address Line 2"
+  },
+  {
+   "fieldname": "column_break_address",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "current_city",
+   "fieldtype": "Data",
+   "label": "City"
+  },
+  {
+   "fieldname": "current_state",
+   "fieldtype": "Data",
+   "label": "State"
+  },
+  {
+   "fieldname": "current_pincode",
+   "fieldtype": "Data",
+   "label": "Pincode"
+  },
+  {
+   "fieldname": "emergency_section",
+   "fieldtype": "Section Break",
+   "label": "Emergency Contact"
+  },
+  {
+   "fieldname": "emergency_contact_name",
+   "fieldtype": "Data",
+   "label": "Contact Name"
+  },
+  {
+   "fieldname": "emergency_contact_phone",
+   "fieldtype": "Data",
+   "label": "Contact Phone",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "statutory_section",
+   "fieldtype": "Section Break",
+   "label": "Statutory (restricted)"
+  },
+  {
+   "fieldname": "pan_number",
+   "fieldtype": "Data",
+   "label": "PAN",
+   "length": 10,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "aadhaar_number",
+   "fieldtype": "Data",
+   "label": "Aadhaar",
+   "length": 12,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "column_break_stat",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "uan_number",
+   "fieldtype": "Data",
+   "label": "UAN",
+   "length": 12,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "esi_number",
+   "fieldtype": "Data",
+   "label": "ESI Number",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "pf_account_number",
+   "fieldtype": "Data",
+   "label": "PF Account",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "bank_section",
+   "fieldtype": "Section Break",
+   "label": "Bank (restricted)"
+  },
+  {
+   "fieldname": "bank_name",
+   "fieldtype": "Data",
+   "label": "Bank Name",
+   "permlevel": 1
+  },
+  {
+   "fieldname": "bank_ifsc",
+   "fieldtype": "Data",
+   "label": "IFSC",
+   "length": 11,
+   "permlevel": 1
+  },
+  {
+   "fieldname": "bank_account_number",
+   "fieldtype": "Data",
+   "label": "Account Number",
+   "permlevel": 1
+  }
+ ],
+ "image_field": "image",
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-09-12 12:00:00",
+ "modified_by": "Administrator",
+ "module": "HR Portal",
+ "name": "HR Employee",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Admin",
+   "permlevel": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Manager",
+   "write": 1
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Payroll Admin"
+  },
+  {
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "HR Payroll Admin",
+   "permlevel": 1
+  },
+  {
+   "read": 1,
+   "role": "HR Reporting Manager"
+  },
+  {
+   "read": 1,
+   "role": "HR Employee",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "employee_name,email,department",
+ "show_name_in_global_search": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

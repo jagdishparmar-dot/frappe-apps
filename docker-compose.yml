@@ -1,26 +1,27 @@
-# Vendor Directory — Docker Compose
+# Vendor Billing + HR Portal — Docker Compose
 #
-# Coolify (default): Coolify proxy assigns domains to vendor-web + frappe-nginx.
+# Coolify (default): Coolify proxy assigns a domain to frappe-nginx.
 # Local:            docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 #
-# Public services (assign domains in Coolify):
-#   vendor-web    → Vendor Portal  (port 3000)
-#   frappe-nginx  → Frappe Desk    (port 8080)
+# Apps baked into the image: every app folder under ./apps (vendor_billing,
+# hr_portal, ...). To add an app — including Frappe CRM — drop it into apps/.
+# HR Portal SPA is served on the Desk domain at /hr.
+#
+# Public service (assign domain in Coolify):
+#   frappe-nginx  → Frappe Desk + /hr SPA    (port 8080)
 #
 # Do NOT assign domains to: db, redis-*, backend, websocket, workers, scheduler
 
-name: vendor-directory
+name: vendor-billing
 
 x-frappe: &frappe
-  image: vendor-directory-frappe:latest
+  image: vendor-billing-frappe:latest
   build:
     context: .
     dockerfile: docker/frappe/Dockerfile
     args:
       FRAPPE_VERSION: ${FRAPPE_VERSION:-v16}
       FRAPPE_BRANCH: ${FRAPPE_BRANCH:-version-16}
-      INSTALL_CRM: ${INSTALL_CRM:-1}
-      CRM_BRANCH: ${CRM_BRANCH:-main}
   pull_policy: build
   environment: &frappe-env
     DB_HOST: db
@@ -34,8 +35,6 @@ x-frappe: &frappe
     ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
     CREDENTIALS_FILE: /home/frappe/frappe-bench/sites/credentials.json
     FRAPPE_INTERNAL_URL: http://backend:8000
-    # Passed to create-site.sh (1 = install crm when apps/crm exists in the image)
-    INSTALL_CRM: ${INSTALL_CRM:-1}
   volumes: &frappe-volumes
     - sites:/home/frappe/frappe-bench/sites
     - logs:/home/frappe/frappe-bench/logs
@@ -196,40 +195,6 @@ services:
       timeout: 10s
       retries: 5
       start_period: 40s
-
-  # Public — Vendor Portal (Coolify domain → port 3000)
-  vendor-web:
-    build:
-      context: ./frontend/vendor-web
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    environment:
-      FRAPPE_URL: http://backend:8000
-      FRAPPE_SITE_NAME: ${FRAPPE_SITE_NAME:-vendors.localhost}
-      NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-Vendor Directory}
-      # Coolify terminates TLS — set true in production
-      COOKIE_SECURE: ${COOKIE_SECURE:-true}
-    # Publish container port only (no host bind) so Coolify can attach a domain → 3000
-    ports:
-      - "3000"
-    depends_on:
-      create-site:
-        condition: service_completed_successfully
-      backend:
-        condition: service_started
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "node",
-          "-e",
-          "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
-        ]
-      interval: 30s
-      timeout: 5s
-      retries: 5
-      start_period: 40s
-    networks: [frappe_network]
 
 volumes:
   db-data:

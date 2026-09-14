@@ -4,7 +4,7 @@ authors = [
     { name = "Coldverse", email = "vms@intoship.cloud" },
 ]
 description = "Vendor billing Desk app (Frappe). The vendor OTP portal is the sibling Next.js app in /portal."
-# Match Frappe Docker / vendor_directory (frappe/build:v16 is typically 3.11–3.13)
+# Match Frappe Docker (frappe/build:v16 is typically 3.11–3.13)
 requires-python = ">=3.10"
 readme = "README.md"
 dynamic = ["version"]
