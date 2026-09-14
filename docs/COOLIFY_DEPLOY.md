@@ -170,6 +170,10 @@ Keep `FRAPPE_SITE_NAME=vendors.localhost` locally.
 | `create-site` stuck | Check `db` healthy + Redis; inspect `create-site` logs. |
 | `The string https:// is no valid url` | Incomplete Coolify/env URL. Set full `SITE_HOST_NAME=https://desk…` (or leave empty until domains exist). Redeploy after pulling latest compose (empty `SERVICE_URL_*` magic vars were removed). |
 | `mount ... frappe.conf.template ... not a directory` | Fixed by baking the nginx template into the image (no file bind-mount). Redeploy/rebuild from latest `main`. |
+| `backend` unhealthy on first boot | Normal — Gunicorn preloads the app before forking workers (can take 60-90s). The `start_period: 90s` healthcheck gives it enough time. If still failing after 90s, check `docker compose logs backend`. |
+| `frappe-nginx` never starts | Depends on `backend: service_healthy`. If backend healthcheck fails, nginx is blocked. Fix backend first. |
+| Memory limit errors (`OOMKilled`) | Increase `BACKEND_MEM_LIMIT` / `DB_MEM_LIMIT` in Coolify env vars. Default limits suit a 4 GB server. |
+| Workers consuming too much CPU | Set `GUNICORN_WORKERS=N` to cap worker count. Default is `2×nproc+1`; lower it if co-hosting other services. |
 
 ### Force site recreate (destructive)
 

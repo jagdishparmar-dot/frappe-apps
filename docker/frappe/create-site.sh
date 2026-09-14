@@ -6,8 +6,6 @@ ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
 DB_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-admin}"
 # Public origin used by Frappe behind Coolify / reverse proxy, e.g. https://desk.example.com
 SITE_HOST_NAME="${SITE_HOST_NAME:-}"
-# Write into the sites volume (owned by frappe). The anonymous /shared volume is root-owned.
-CREDENTIALS_FILE="${CREDENTIALS_FILE:-/home/frappe/frappe-bench/sites/credentials.json}"
 
 mkdir -p /home/frappe/frappe-bench/logs
 cd /home/frappe/frappe-bench
@@ -78,10 +76,5 @@ if [[ -n "${SITE_HOST_NAME}" && "${SITE_HOST_NAME}" != "https://" && "${SITE_HOS
     echo "Skipping invalid SITE_HOST_NAME=${SITE_HOST_NAME} (expected e.g. https://desk.example.com)"
   fi
 fi
-
-echo "Writing optional API credentials file (not required for UI login)"
-python3 /home/frappe/write-api-credentials.py \
-  --site "${SITE_NAME}" \
-  --path "${CREDENTIALS_FILE}" || echo "Skipped API credential write"
 
 echo "Site bootstrap complete (apps: ${install_apps[*]})"

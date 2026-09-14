@@ -11,18 +11,42 @@
 #   frappe-nginx  → Frappe Desk + /hr SPA    (port 8080)
 #
 # Do NOT assign domains to: db, redis-*, backend, websocket, workers, scheduler
+#
+# ── Optimisation notes ────────────────────────────────────────────────────────
+# pull_policy: missing  → image built once; only rebuilds when the image is
+#   absent (first run) or you explicitly pass --build / docker compose build.
+#   Prevents Coolify from triggering a 10-30 min bench-init on every redeploy.
+#
+# deploy.resources      → per-service CPU + RAM caps protect the host from
+#   runaway workers.  Tune via FRAPPE_MEM_LIMIT / DB_MEM_LIMIT env vars or
+#   edit the values below to match your server size.
+#
+# logging               → json-file with size cap; prevents /var/lib/docker
+#   filling up over time (Frappe + workers are very chatty).
+# ──────────────────────────────────────────────────────────────────────────────
 
 name: vendor-billing
 
+# ── Shared log-rotation anchor ────────────────────────────────────────────────
+x-logging: &logging
+  driver: "json-file"
+  options:
+    max-size: "20m"
+    max-file: "5"
+
+# ── Shared Frappe service anchor ──────────────────────────────────────────────
 x-frappe: &frappe
-  image: vendor-billing-frappe:latest
+  image: ${FRAPPE_IMAGE:-vendor-billing-frappe:latest}
   build:
     context: .
     dockerfile: docker/frappe/Dockerfile
     args:
       FRAPPE_VERSION: ${FRAPPE_VERSION:-v16}
       FRAPPE_BRANCH: ${FRAPPE_BRANCH:-version-16}
-  pull_policy: build
+  # missing  → build once (or when image absent), reuse on subsequent deploys.
+  # Override to "always" if using a pre-built registry image pushed by CI.
+  pull_policy: missing
+  logging: *logging
   environment: &frappe-env
     DB_HOST: db
     DB_PORT: "3306"
@@ -33,14 +57,13 @@ x-frappe: &frappe
     # Public HTTPS origin for Frappe (Coolify desk URL), e.g. https://desk.example.com
     SITE_HOST_NAME: ${SITE_HOST_NAME:-}
     ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
-    CREDENTIALS_FILE: /home/frappe/frappe-bench/sites/credentials.json
-    FRAPPE_INTERNAL_URL: http://backend:8000
   volumes: &frappe-volumes
     - sites:/home/frappe/frappe-bench/sites
     - logs:/home/frappe/frappe-bench/logs
   networks: [frappe_network]
 
 services:
+  # ── Database ────────────────────────────────────────────────────────────────
   db:
     image: mariadb:11.8
     restart: unless-stopped
@@ -48,6 +71,17 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --skip-character-set-client-handshake
+      # InnoDB tuning — set innodb-buffer-pool-size to ~50 % of DB mem limit
+      - --innodb-buffer-pool-size=${DB_INNODB_BUFFER:-384M}
+      - --innodb-log-file-size=64M
+      # 2 = flush log once/sec (safe trade-off for single-server prod)
+      - --innodb-flush-log-at-trx-commit=2
+      - --max-connections=150
+      # query cache is deprecated and causes contention — keep it off
+      - --query-cache-type=0
+      - --slow-query-log=1
+      - --slow-query-log-file=/var/lib/mysql/slow.log
+      - --long-query-time=2
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
       MARIADB_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-changeme}
@@ -59,11 +93,28 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    logging: *logging
+    deploy:
+      resources:
+        limits:
+          cpus: "${DB_CPU_LIMIT:-1.0}"
+          memory: ${DB_MEM_LIMIT:-768M}
+        reservations:
+          memory: 256M
     networks: [frappe_network]
 
+  # ── Redis ───────────────────────────────────────────────────────────────────
   redis-cache:
     image: redis:6.2-alpine
     restart: unless-stopped
+    logging: *logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 192M
+        reservations:
+          memory: 32M
     networks: [frappe_network]
 
   redis-queue:
@@ -71,8 +122,17 @@ services:
     restart: unless-stopped
     volumes:
       - redis-queue-data:/data
+    logging: *logging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 192M
+        reservations:
+          memory: 32M
     networks: [frappe_network]
 
+  # ── One-shot init services ──────────────────────────────────────────────────
   configurator:
     <<: *frappe
     restart: "no"
@@ -98,6 +158,11 @@ services:
         condition: service_started
       redis-queue:
         condition: service_started
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
 
   create-site:
     <<: *frappe
@@ -106,13 +171,46 @@ services:
     depends_on:
       configurator:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
 
+  # ── Application services ────────────────────────────────────────────────────
   backend:
     <<: *frappe
     restart: unless-stopped
+    # Gunicorn worker count / threads / timeout are tunable via env vars.
+    # Defaults in start.sh: workers = (nproc × 2 + 1), threads = 4,
+    # timeout = 60, max-requests = 1000.
+    environment:
+      <<: *frappe-env
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-}       # blank = auto (2×nproc+1)
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
+      GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-60}
+      GUNICORN_MAX_REQUESTS: ${GUNICORN_MAX_REQUESTS:-1000}
+      GUNICORN_MAX_REQUESTS_JITTER: ${GUNICORN_MAX_REQUESTS_JITTER:-100}
     depends_on:
       create-site:
         condition: service_completed_successfully
+    healthcheck:
+      # Frappe routes requests by Host header — must match the site name.
+      # $$SITE_NAME is escaped so docker-compose passes a literal $SITE_NAME
+      # to the shell inside the container, where it expands correctly.
+      test: ["CMD-SHELL", "curl -sf -H \"Host: $$SITE_NAME\" http://127.0.0.1:8000/api/method/ping || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      # --preload with many workers can take 60-90s to fully start on first boot.
+      start_period: 90s
+    deploy:
+      resources:
+        limits:
+          cpus: "${BACKEND_CPU_LIMIT:-1.5}"
+          memory: ${BACKEND_MEM_LIMIT:-768M}
+        reservations:
+          memory: 256M
 
   websocket:
     <<: *frappe
@@ -127,7 +225,18 @@ services:
     depends_on:
       create-site:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 192M
+        reservations:
+          memory: 64M
 
+  # ── Workers ─────────────────────────────────────────────────────────────────
+  # queue-short handles short + default priority jobs (fast, user-facing tasks).
+  # queue-long  handles long-running jobs only — no overlap with short/default
+  # to prevent slow jobs from starving quick ones.
   queue-short:
     <<: *frappe
     restart: unless-stopped
@@ -139,11 +248,19 @@ services:
     depends_on:
       create-site:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 384M
+        reservations:
+          memory: 128M
 
   queue-long:
     <<: *frappe
     restart: unless-stopped
-    command: ["bench", "worker", "--queue", "long,default,short"]
+    # long queue only — default/short jobs are handled exclusively by queue-short
+    command: ["bench", "worker", "--queue", "long"]
     environment:
       <<: *frappe-env
       FRAPPE_REDIS_CACHE: redis://redis-cache:6379
@@ -151,6 +268,13 @@ services:
     depends_on:
       create-site:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "0.75"
+          memory: 384M
+        reservations:
+          memory: 128M
 
   scheduler:
     <<: *frappe
@@ -159,8 +283,16 @@ services:
     depends_on:
       create-site:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 192M
+        reservations:
+          memory: 64M
 
-  # Public — Frappe Desk + API + socket.io (Coolify domain → port 8080)
+  # ── Public ingress ───────────────────────────────────────────────────────────
+  # Frappe Desk + API + socket.io  (Coolify domain → port 8080)
   frappe-nginx:
     <<: *frappe
     restart: unless-stopped
@@ -170,8 +302,10 @@ services:
       BACKEND: backend:8000
       FRAPPE_SITE_NAME_HEADER: ${FRAPPE_SITE_NAME:-vendors.localhost}
       SOCKETIO: websocket:9000
-      # Trust Coolify Traefik / Caddy forwarded headers
-      UPSTREAM_REAL_IP_ADDRESS: ${UPSTREAM_REAL_IP_ADDRESS:-0.0.0.0/0}
+      # Trust Coolify Traefik / Caddy forwarded headers.
+      # Narrow this to Coolify's internal Docker subnet in production
+      # (docker network inspect coolify | grep Subnet).
+      UPSTREAM_REAL_IP_ADDRESS: ${UPSTREAM_REAL_IP_ADDRESS:-172.16.0.0/12}
       UPSTREAM_REAL_IP_HEADER: X-Forwarded-For
       UPSTREAM_REAL_IP_RECURSIVE: "on"
       PROXY_READ_TIMEOUT: "120"
@@ -183,8 +317,12 @@ services:
     ports:
       - "8080"
     depends_on:
-      - backend
-      - websocket
+      backend:
+        # Wait for Gunicorn to be fully ready before nginx starts proxying,
+        # eliminating 502s during container startup.
+        condition: service_healthy
+      websocket:
+        condition: service_started
     healthcheck:
       test:
         [
@@ -195,6 +333,13 @@ services:
       timeout: 10s
       retries: 5
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+        reservations:
+          memory: 32M
 
 volumes:
   db-data:

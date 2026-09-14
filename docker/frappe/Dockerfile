@@ -85,7 +85,6 @@ USER root
 COPY --chmod=755 docker/frappe/resources/main-entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY --chmod=755 docker/frappe/resources/start.sh /usr/local/bin/start.sh
 COPY --chmod=755 --chown=frappe:frappe docker/frappe/create-site.sh /home/frappe/create-site.sh
-COPY --chown=frappe:frappe docker/frappe/write-api-credentials.py /home/frappe/write-api-credentials.py
 # Bake nginx template into the image (avoid Coolify bind-mount file→dir issues)
 COPY docker/frappe/nginx/frappe.conf.template /templates/nginx/frappe.conf.template
 
