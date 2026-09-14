@@ -14,6 +14,11 @@ map $http_x_forwarded_proto $proxy_x_forwarded_proto {
 
 server {
 	listen 8080;
+	# Port 80 is used internally within the Docker network:
+	# the websocket container resolves the site hostname (via Docker network alias
+	# on frappe-nginx) and calls back on port 80 for session auth validation.
+	# Port 80 is NOT exposed to the host (no entry in compose `ports:`).
+	listen 80;
 	server_name ${FRAPPE_SITE_NAME_HEADER};
   absolute_redirect off;
 	root /home/frappe/frappe-bench/sites;

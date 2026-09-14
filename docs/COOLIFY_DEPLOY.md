@@ -17,7 +17,8 @@ Everything else (`db`, Redis, `backend`, workers, websocket, scheduler) stays **
 - Git repo with this project (Coolify **Docker Compose** build pack)
 - One DNS record pointing at the Coolify server:
   - `desk.yourdomain.com` → Frappe Desk
-- At least **4 GB RAM** recommended (Frappe image build is heavy)
+- At least **4 GB RAM** on the Coolify server (Frappe image **build** is heavy).
+- Runtime after deploy is sized for a **shared** host: the stack caps at about **2.2 GB RAM / 3.5 CPU**. Coolify’s proxy plus other apps still need headroom.
 
 ---
 
@@ -109,7 +110,28 @@ Coolify Proxy (TLS)
 
 ---
 
-## 8. Volumes / persistence
+## 8. Resource budget (shared Coolify host)
+
+Defaults assume this stack shares the server with Coolify and other apps. Limits are a ceiling, reservations are the guaranteed floor (kept low so idle RAM is not pinned).
+
+| Service | CPU limit | RAM limit | Notes |
+|---------|-----------|-----------|--------|
+| `db` | 0.75 | 512M | InnoDB buffer 256M; max 50 connections |
+| `backend` | 1.0 | 640M | Gunicorn **2 workers × 2 threads** |
+| `queue-short` / `queue-long` | 0.5 each | 320M each | Split so long jobs cannot starve short ones |
+| `redis-cache` / `redis-queue` | 0.15 each | 64M / 80M | `maxmemory` set; cache never persists |
+| `websocket` / `scheduler` | 0.2 / 0.15 | 128M each | Mostly idle |
+| `frappe-nginx` | 0.25 | 64M | Public ingress only |
+
+**Steady-state cap:** ~2.2 GB RAM / ~3.5 CPU. One-shot `create-site` can add 512M during deploy/migrate.
+
+If Desk feels slow or you see `OOMKilled`, raise `BACKEND_MEM_LIMIT` / `DB_MEM_LIMIT` / `GUNICORN_WORKERS` in Coolify env — do not raise workers without also raising the backend memory limit.
+
+To reclaim another ~320 MB on a very small host, stop `queue-long` and point `queue-short` at `--queue short,default,long` (long jobs will then block short ones).
+
+---
+
+## 9. Volumes / persistence
 
 Coolify keeps named volumes across redeploys:
 
@@ -124,7 +146,7 @@ Back up **`db-data` + `sites`** before major upgrades.
 
 ---
 
-## 9. Updates / redeploy
+## 10. Updates / redeploy
 
 1. Push to Git (or trigger Coolify redeploy)
 2. Image rebuilds if Dockerfile / app code changed
@@ -144,7 +166,7 @@ Back up **`db-data` + `sites`** before major upgrades.
 
 ---
 
-## 10. Local development
+## 11. Local development
 
 ```bash
 cp .env.example .env
@@ -159,7 +181,7 @@ Keep `FRAPPE_SITE_NAME=vendors.localhost` locally.
 
 ---
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 | Symptom | Fix |
 |---------|-----|
@@ -172,8 +194,8 @@ Keep `FRAPPE_SITE_NAME=vendors.localhost` locally.
 | `mount ... frappe.conf.template ... not a directory` | Fixed by baking the nginx template into the image (no file bind-mount). Redeploy/rebuild from latest `main`. |
 | `backend` unhealthy on first boot | Normal — Gunicorn preloads the app before forking workers (can take 60-90s). The `start_period: 90s` healthcheck gives it enough time. If still failing after 90s, check `docker compose logs backend`. |
 | `frappe-nginx` never starts | Depends on `backend: service_healthy`. If backend healthcheck fails, nginx is blocked. Fix backend first. |
-| Memory limit errors (`OOMKilled`) | Increase `BACKEND_MEM_LIMIT` / `DB_MEM_LIMIT` in Coolify env vars. Default limits suit a 4 GB server. |
-| Workers consuming too much CPU | Set `GUNICORN_WORKERS=N` to cap worker count. Default is `2×nproc+1`; lower it if co-hosting other services. |
+| Memory limit errors (`OOMKilled`) | Increase `BACKEND_MEM_LIMIT` / `DB_MEM_LIMIT` / `WORKER_MEM_LIMIT` in Coolify env vars. Defaults are for a **shared** host (~2.2 GB stack cap). |
+| Workers consuming too much CPU / RAM | Keep `GUNICORN_WORKERS=2` (default). Do **not** use auto `2×nproc+1` — `nproc` sees host cores on Coolify and over-spawns. |
 
 ### Force site recreate (destructive)
 
@@ -186,7 +208,7 @@ Only if you must change `FRAPPE_SITE_NAME` and accept data loss:
 
 ---
 
-## 12. Security checklist
+## 13. Security checklist
 
 - [ ] Strong `MYSQL_ROOT_PASSWORD` and `ADMIN_PASSWORD`  
 - [ ] Desk on an HTTPS domain  

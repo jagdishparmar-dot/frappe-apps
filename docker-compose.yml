@@ -17,9 +17,13 @@
 #   absent (first run) or you explicitly pass --build / docker compose build.
 #   Prevents Coolify from triggering a 10-30 min bench-init on every redeploy.
 #
-# deploy.resources      → per-service CPU + RAM caps protect the host from
-#   runaway workers.  Tune via FRAPPE_MEM_LIMIT / DB_MEM_LIMIT env vars or
-#   edit the values below to match your server size.
+# Shared Coolify host  → defaults target ~2.2 GB RAM / ~3.5 CPU at the cap so
+#   Coolify + other apps still have headroom. Reservations stay low so idle
+#   memory is not pinned. Raise via env vars if this stack is dedicated.
+#
+# Gunicorn             → default 2 workers × 2 threads. Do NOT leave workers
+#   as auto (2×nproc+1): nproc sees HOST cores on Coolify, not the cgroup
+#   limit, and will OOM the backend / starve neighbours.
 #
 # logging               → json-file with size cap; prevents /var/lib/docker
 #   filling up over time (Frappe + workers are very chatty).
@@ -31,8 +35,8 @@ name: vendor-billing
 x-logging: &logging
   driver: "json-file"
   options:
-    max-size: "20m"
-    max-file: "5"
+    max-size: "10m"
+    max-file: "3"
 
 # ── Shared Frappe service anchor ──────────────────────────────────────────────
 x-frappe: &frappe
@@ -62,6 +66,13 @@ x-frappe: &frappe
     - logs:/home/frappe/frappe-bench/logs
   networks: [frappe_network]
 
+# Scheduler lock-file volume — shared between backend (health report reads it)
+# and scheduler (writes the flock). Without this, the health report sees the
+# bench/config/ directory from the image layer (no lock file) and always
+# reports "Process Not Found" even when the scheduler is running.
+x-bench-config-volume: &bench-config-volume
+  - bench-config:/home/frappe/frappe-bench/config
+
 services:
   # ── Database ────────────────────────────────────────────────────────────────
   db:
@@ -71,12 +82,20 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --skip-character-set-client-handshake
-      # InnoDB tuning — set innodb-buffer-pool-size to ~50 % of DB mem limit
-      - --innodb-buffer-pool-size=${DB_INNODB_BUFFER:-384M}
+      # InnoDB tuning — keep the buffer pool at ~50 % of DB_MEM_LIMIT
+      - --innodb-buffer-pool-size=${DB_INNODB_BUFFER:-256M}
+      - --innodb-buffer-pool-instances=1
       - --innodb-log-file-size=64M
       # 2 = flush log once/sec (safe trade-off for single-server prod)
       - --innodb-flush-log-at-trx-commit=2
-      - --max-connections=150
+      # This stack only needs gunicorn + 2 RQ workers + scheduler (~20 conns).
+      # Each unused slot still reserves RAM — 150 was far too high.
+      - --max-connections=${DB_MAX_CONNECTIONS:-50}
+      - --table-open-cache=200
+      - --tmp-table-size=32M
+      - --max-heap-table-size=32M
+      # Performance schema costs 30–80 MB and is unused here
+      - --skip-performance-schema
       # query cache is deprecated and causes contention — keep it off
       - --query-cache-type=0
       - --slow-query-log=1
@@ -97,39 +116,62 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "${DB_CPU_LIMIT:-1.0}"
-          memory: ${DB_MEM_LIMIT:-768M}
+          cpus: "${DB_CPU_LIMIT:-0.75}"
+          memory: ${DB_MEM_LIMIT:-512M}
         reservations:
-          memory: 256M
+          memory: 128M
     networks: [frappe_network]
 
   # ── Redis ───────────────────────────────────────────────────────────────────
   redis-cache:
     image: redis:6.2-alpine
     restart: unless-stopped
+    # Evict stale cache keys; never persist (RDB fork would double RAM).
+    command:
+      - redis-server
+      - --maxmemory
+      - ${REDIS_CACHE_MAXMEMORY:-48mb}
+      - --maxmemory-policy
+      - allkeys-lru
+      - --save
+      - ""
+      - --appendonly
+      - "no"
     logging: *logging
     deploy:
       resources:
         limits:
-          cpus: "0.25"
-          memory: 192M
+          cpus: "0.15"
+          memory: ${REDIS_CACHE_MEM_LIMIT:-64M}
         reservations:
-          memory: 32M
+          memory: 16M
     networks: [frappe_network]
 
   redis-queue:
     image: redis:6.2-alpine
     restart: unless-stopped
+    # AOF instead of RDB snapshots — avoids a memory-doubling BGSAVE fork.
+    # noeviction: never drop queued jobs when full (fail the writer instead).
+    command:
+      - redis-server
+      - --maxmemory
+      - ${REDIS_QUEUE_MAXMEMORY:-64mb}
+      - --maxmemory-policy
+      - noeviction
+      - --appendonly
+      - "yes"
+      - --save
+      - ""
     volumes:
       - redis-queue-data:/data
     logging: *logging
     deploy:
       resources:
         limits:
-          cpus: "0.25"
-          memory: 192M
+          cpus: "0.15"
+          memory: ${REDIS_QUEUE_MEM_LIMIT:-80M}
         reservations:
-          memory: 32M
+          memory: 16M
     networks: [frappe_network]
 
   # ── One-shot init services ──────────────────────────────────────────────────
@@ -181,13 +223,18 @@ services:
   backend:
     <<: *frappe
     restart: unless-stopped
-    # Gunicorn worker count / threads / timeout are tunable via env vars.
-    # Defaults in start.sh: workers = (nproc × 2 + 1), threads = 4,
-    # timeout = 60, max-requests = 1000.
+    # Gunicorn: 2 workers × 2 threads is enough for a small Desk + /hr site
+    # on a shared Coolify host. Raising workers without raising
+    # BACKEND_MEM_LIMIT will OOM (each worker is ~80–150 MB after preload).
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+      # Shared with scheduler so the health report can read the scheduler lock file.
+      - bench-config:/home/frappe/frappe-bench/config
     environment:
       <<: *frappe-env
-      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-}       # blank = auto (2×nproc+1)
-      GUNICORN_THREADS: ${GUNICORN_THREADS:-4}
+      GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
+      GUNICORN_THREADS: ${GUNICORN_THREADS:-2}
       GUNICORN_TIMEOUT: ${GUNICORN_TIMEOUT:-60}
       GUNICORN_MAX_REQUESTS: ${GUNICORN_MAX_REQUESTS:-1000}
       GUNICORN_MAX_REQUESTS_JITTER: ${GUNICORN_MAX_REQUESTS_JITTER:-100}
@@ -207,10 +254,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "${BACKEND_CPU_LIMIT:-1.5}"
-          memory: ${BACKEND_MEM_LIMIT:-768M}
+          cpus: "${BACKEND_CPU_LIMIT:-1.0}"
+          memory: ${BACKEND_MEM_LIMIT:-640M}
         reservations:
-          memory: 256M
+          memory: 192M
 
   websocket:
     <<: *frappe
@@ -228,10 +275,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.25"
-          memory: 192M
+          cpus: "0.2"
+          memory: 128M
         reservations:
-          memory: 64M
+          memory: 32M
 
   # ── Workers ─────────────────────────────────────────────────────────────────
   # queue-short handles short + default priority jobs (fast, user-facing tasks).
@@ -251,10 +298,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.75"
-          memory: 384M
+          cpus: "${WORKER_CPU_LIMIT:-0.5}"
+          memory: ${WORKER_MEM_LIMIT:-320M}
         reservations:
-          memory: 128M
+          memory: 80M
 
   queue-long:
     <<: *frappe
@@ -271,25 +318,30 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.75"
-          memory: 384M
+          cpus: "${WORKER_CPU_LIMIT:-0.5}"
+          memory: ${WORKER_MEM_LIMIT:-320M}
         reservations:
-          memory: 128M
+          memory: 80M
 
   scheduler:
     <<: *frappe
     restart: unless-stopped
     command: ["bench", "schedule"]
+    volumes:
+      - sites:/home/frappe/frappe-bench/sites
+      - logs:/home/frappe/frappe-bench/logs
+      # Shared with backend so the health report can read the scheduler lock file.
+      - bench-config:/home/frappe/frappe-bench/config
     depends_on:
       create-site:
         condition: service_completed_successfully
     deploy:
       resources:
         limits:
-          cpus: "0.25"
-          memory: 192M
+          cpus: "0.15"
+          memory: 128M
         reservations:
-          memory: 64M
+          memory: 32M
 
   # ── Public ingress ───────────────────────────────────────────────────────────
   # Frappe Desk + API + socket.io  (Coolify domain → port 8080)
@@ -313,6 +365,17 @@ services:
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
+    # Network alias so the websocket container can resolve the site hostname
+    # (vendors.localhost) to this nginx container via the Docker network.
+    # The websocket auth middleware fetches /api/method/frappe.realtime.get_user_info
+    # from the URL built from the Origin header. Without this alias that hostname
+    # can't resolve inside Docker and the socket.io connection fails.
+    # Nginx also listens on port 80 (internal only, not exposed to host) so the
+    # websocket fetch on port 80 reaches nginx and is proxied to backend:8000.
+    networks:
+      frappe_network:
+        aliases:
+          - ${FRAPPE_SITE_NAME:-vendors.localhost}
     # Publish container port only (no host bind) so Coolify can attach a domain → 8080
     ports:
       - "8080"
@@ -336,16 +399,19 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "0.5"
-          memory: 128M
+          cpus: "0.25"
+          memory: 64M
         reservations:
-          memory: 32M
+          memory: 16M
 
 volumes:
   db-data:
   redis-queue-data:
   sites:
   logs:
+  # Shared bench/config dir — holds the scheduler flock file so the health
+  # report (running in the backend container) can detect the scheduler process.
+  bench-config:
 
 networks:
   frappe_network:
