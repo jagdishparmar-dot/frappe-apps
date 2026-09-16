@@ -61,6 +61,15 @@ x-frappe: &frappe
     # Public HTTPS origin for Frappe (Coolify desk URL), e.g. https://desk.example.com
     SITE_HOST_NAME: ${SITE_HOST_NAME:-}
     ADMIN_PASSWORD: ${ADMIN_PASSWORD:-changeme}
+    # Comma-separated apps for the primary site (empty = all apps in the image)
+    INSTALL_APPS: ${INSTALL_APPS:-}
+    SKIP_INSTALL_APPS: ${SKIP_INSTALL_APPS:-}
+    # Optional dedicated control-plane site (bench_control only by default)
+    CONTROL_SITE_NAME: ${CONTROL_SITE_NAME:-}
+    CONTROL_SITE_APPS: ${CONTROL_SITE_APPS:-bench_control}
+    # Run bench jobs inline in the web process (useful for local smoke tests)
+    BENCH_CONTROL_SYNC_JOBS: ${BENCH_CONTROL_SYNC_JOBS:-0}
+    MULTI_SITE: ${MULTI_SITE:-0}
   volumes: &frappe-volumes
     - sites:/home/frappe/frappe-bench/sites
     - logs:/home/frappe/frappe-bench/logs
@@ -354,6 +363,7 @@ services:
       BACKEND: backend:8000
       FRAPPE_SITE_NAME_HEADER: ${FRAPPE_SITE_NAME:-vendors.localhost}
       SOCKETIO: websocket:9000
+      MULTI_SITE: ${MULTI_SITE:-0}
       # Trust Coolify Traefik / Caddy forwarded headers.
       # Narrow this to Coolify's internal Docker subnet in production
       # (docker network inspect coolify | grep Subnet).
@@ -376,6 +386,7 @@ services:
       frappe_network:
         aliases:
           - ${FRAPPE_SITE_NAME:-vendors.localhost}
+          - ${CONTROL_SITE_NAME:-control.localhost}
     # Publish container port only (no host bind) so Coolify can attach a domain → 8080
     ports:
       - "8080"

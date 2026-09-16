@@ -1,0 +1,10 @@
+frontend/node_modules
+ref_frontend
+**/__pycache__
+**/*.pyc
+**/*.pyo
+.git
+.gitignore
+.env
+.env.*
+docker-compose.dev.yml

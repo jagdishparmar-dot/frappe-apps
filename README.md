@@ -17,8 +17,9 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 
 | URL | Who |
 |-----|-----|
-| http://localhost:8080 | Frappe Desk (admin) |
-| http://localhost:8080/hr | HR Portal SPA (HR roles) |
+| http://vendors.localhost:8080 | Frappe Desk (admin) — add `127.0.0.1 vendors.localhost` to hosts if needed |
+| http://vendors.localhost:8080/hr | HR Portal SPA (HR roles) |
+| http://vendors.localhost:8080/control | Bench Control (System Manager) — sites & apps |
 
 **Desk:** `Administrator` / `ADMIN_PASSWORD` (default in `.env.example` is `changeme`)
 
@@ -26,6 +27,7 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 
 1. Desk → **VB Vendor** → New  
 2. Review KYC, agreements, and invoices in Vendor Billing  
+3. Open **/control** to create extra sites and install apps already in the image  
 
 ## Layout
 
@@ -33,11 +35,12 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 apps/                    # Every app folder here is built + installed automatically
 apps/vendor_billing/     # Frappe Vendor Billing Desk app + portal APIs
 apps/hr_portal/          # Frappe HR Portal app + Vue SPA frontend (/hr)
+apps/bench_control/      # Bench control plane UI (/control) — manage sites/apps
 docker/                  # Frappe image + nginx templates
 docs/COOLIFY_DEPLOY.md   # Coolify production guide
 docs/ADD_FRAPPE_CRM.md   # Add Frappe CRM (or any app) via the apps/ folder
 docker-compose.yml       # Coolify / production compose
-docker-compose.dev.yml   # Local published Desk port
+docker-compose.dev.yml   # Local published Desk port + multi-site Host routing
 ```
 
 ## Adding an app (incl. Frappe CRM)

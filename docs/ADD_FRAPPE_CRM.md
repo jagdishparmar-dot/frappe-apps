@@ -10,8 +10,10 @@ Current apps:
 |-----|------|
 | `vendor_billing` | Vendors, agreements, invoices, KYC (Desk + portal APIs) |
 | `hr_portal` | HR + attendance SPA at `/hr` (custom Vue frontend, same pattern as CRM) |
+| `bench_control` | Bench control plane UI at `/control` (sites + apps; System Manager) |
 
-They share one Frappe site, one DB, and the same Desk login.
+They share one Frappe site by default. Use `INSTALL_APPS` / `CONTROL_SITE_NAME` to put
+`bench_control` on a dedicated site if you prefer.
 
 ---
 

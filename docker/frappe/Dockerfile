@@ -84,7 +84,10 @@ VOLUME [ \
 USER root
 COPY --chmod=755 docker/frappe/resources/main-entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY --chmod=755 docker/frappe/resources/start.sh /usr/local/bin/start.sh
+COPY --chmod=755 docker/frappe/resources/nginx-entrypoint.sh /usr/local/bin/nginx-entrypoint.sh
 COPY --chmod=755 --chown=frappe:frappe docker/frappe/create-site.sh /home/frappe/create-site.sh
+# Normalize CRLF from Windows checkouts so shebangs work in Linux containers
+RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh /usr/local/bin/start.sh /usr/local/bin/nginx-entrypoint.sh /home/frappe/create-site.sh
 # Bake nginx template into the image (avoid Coolify bind-mount file→dir issues)
 COPY docker/frappe/nginx/frappe.conf.template /templates/nginx/frappe.conf.template
 

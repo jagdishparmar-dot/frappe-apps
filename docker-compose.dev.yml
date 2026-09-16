@@ -2,12 +2,31 @@
 #
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d
 #
-# Desk: http://localhost:8080
+# Desk:     http://vendors.localhost:8080
+# Control:  http://vendors.localhost:8080/control
+#
+# Tip: add `127.0.0.1 vendors.localhost` to your hosts file if needed.
 
 services:
+  create-site:
+    environment:
+      # Install product apps + control plane on the primary local site
+      INSTALL_APPS: ${INSTALL_APPS:-vendor_billing,hr_portal,bench_control}
+      BENCH_CONTROL_SYNC_JOBS: "1"
+
+  backend:
+    environment:
+      BENCH_CONTROL_SYNC_JOBS: "1"
+      INSTALL_APPS: ${INSTALL_APPS:-vendor_billing,hr_portal,bench_control}
+
+  queue-long:
+    environment:
+      BENCH_CONTROL_SYNC_JOBS: "1"
+
   frappe-nginx:
     ports:
       - "${FRAPPE_PORT:-8080}:8080"
     environment:
       UPSTREAM_REAL_IP_ADDRESS: 127.0.0.1
       UPSTREAM_REAL_IP_RECURSIVE: "off"
+      MULTI_SITE: ${MULTI_SITE:-1}

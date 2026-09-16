@@ -4,8 +4,11 @@ set -euo pipefail
 SITE_NAME="${SITE_NAME:-vendors.localhost}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
 DB_ROOT_PASSWORD="${MYSQL_ROOT_PASSWORD:-admin}"
-# Public origin used by Frappe behind Coolify / reverse proxy, e.g. https://desk.example.com
 SITE_HOST_NAME="${SITE_HOST_NAME:-}"
+INSTALL_APPS="${INSTALL_APPS:-}"
+SKIP_INSTALL_APPS="${SKIP_INSTALL_APPS:-}"
+CONTROL_SITE_NAME="${CONTROL_SITE_NAME:-}"
+CONTROL_SITE_APPS="${CONTROL_SITE_APPS:-bench_control}"
 
 mkdir -p /home/frappe/frappe-bench/logs
 cd /home/frappe/frappe-bench
@@ -28,46 +31,104 @@ done
 
 echo "common_site_config.json ready"
 
-# Install every app baked into the image (apps/ folder in the build context).
-# Adding an app = adding its folder to apps/ at build time — no changes needed here.
-install_apps=()
+all_apps=()
 for app in $(ls -1 apps); do
   [[ "${app}" == "frappe" ]] && continue
-  install_apps+=("${app}")
+  all_apps+=("${app}")
 done
-if [[ ${#install_apps[@]} -eq 0 ]]; then
+if [[ ${#all_apps[@]} -eq 0 ]]; then
   echo "WARNING: no apps found in the image — expected at least one under apps/"
 fi
 
-install_app_flags=()
-for app in "${install_apps[@]}"; do
-  install_app_flags+=(--install-app "${app}")
-done
-
-ensure_apps_installed() {
-  for app in "${install_apps[@]}"; do
-    echo "Ensuring app installed: ${app}"
-    bench --site "${SITE_NAME}" install-app "${app}" || true
-  done
-  bench --site "${SITE_NAME}" migrate
+trim() {
+  local s="$1"
+  s="${s#"${s%%[![:space:]]*}"}"
+  s="${s%"${s##*[![:space:]]}"}"
+  printf '%s' "$s"
 }
 
-if [[ -d "sites/${SITE_NAME}" ]]; then
-  echo "Site ${SITE_NAME} already exists — ensuring apps are installed"
-  ensure_apps_installed
-else
-  echo "Creating site ${SITE_NAME} with apps: ${install_apps[*]}"
-  bench new-site "${SITE_NAME}" \
-    --mariadb-user-host-login-scope='%' \
-    --admin-password="${ADMIN_PASSWORD}" \
-    --db-root-username=root \
-    --db-root-password="${DB_ROOT_PASSWORD}" \
-    "${install_app_flags[@]}" \
-    --set-default
+is_skipped() {
+  local needle="$1"
+  local item
+  local IFS=','
+  for item in ${SKIP_INSTALL_APPS}; do
+    item="$(trim "${item}")"
+    [[ -n "${item}" && "${item}" == "${needle}" ]] && return 0
+  done
+  return 1
+}
+
+# Populate nameref array with resolved app names
+resolve_apps_into() {
+  local -n _out="$1"
+  local requested="$2"
+  local item app
+  _out=()
+  if [[ -z "${requested}" ]]; then
+    for app in "${all_apps[@]}"; do
+      is_skipped "${app}" && continue
+      _out+=("${app}")
+    done
+    return 0
+  fi
+  local IFS=','
+  for item in ${requested}; do
+    item="$(trim "${item}")"
+    [[ -z "${item}" ]] && continue
+    if [[ ! -d "apps/${item}" ]]; then
+      echo "WARNING: requested app '${item}' not in image — skipping"
+      continue
+    fi
+    _out+=("${item}")
+  done
+}
+
+ensure_site() {
+  local site="$1"
+  shift
+  local apps=("$@")
+  local flags=()
+  local app
+  local set_default_flag=()
+
+  # Only the primary SITE_NAME becomes default on first create
+  if [[ "${site}" == "${SITE_NAME}" ]]; then
+    set_default_flag=(--set-default)
+  fi
+
+  for app in "${apps[@]+"${apps[@]}"}"; do
+    flags+=(--install-app "${app}")
+  done
+
+  if [[ -d "sites/${site}" ]]; then
+    echo "Site ${site} already exists — ensuring apps: ${apps[*]:-none}"
+    for app in "${apps[@]+"${apps[@]}"}"; do
+      echo "Ensuring app installed: ${app}"
+      bench --site "${site}" install-app "${app}" || true
+    done
+    bench --site "${site}" migrate
+  else
+    echo "Creating site ${site} with apps: ${apps[*]:-none}"
+    bench new-site "${site}" \
+      --mariadb-user-host-login-scope='%' \
+      --admin-password="${ADMIN_PASSWORD}" \
+      --db-root-username=root \
+      --db-root-password="${DB_ROOT_PASSWORD}" \
+      "${flags[@]+"${flags[@]}"}" \
+      "${set_default_flag[@]+"${set_default_flag[@]}"}"
+  fi
+}
+
+primary_apps=()
+resolve_apps_into primary_apps "${INSTALL_APPS}"
+ensure_site "${SITE_NAME}" "${primary_apps[@]+"${primary_apps[@]}"}"
+
+if [[ -n "${CONTROL_SITE_NAME}" && "${CONTROL_SITE_NAME}" != "${SITE_NAME}" ]]; then
+  control_apps=()
+  resolve_apps_into control_apps "${CONTROL_SITE_APPS}"
+  ensure_site "${CONTROL_SITE_NAME}" "${control_apps[@]+"${control_apps[@]}"}"
 fi
 
-# Behind Coolify / Traefik / Caddy: tell Frappe its public HTTPS URL
-# Skip incomplete values like "https://" which Coolify/env UIs sometimes leave blank.
 if [[ -n "${SITE_HOST_NAME}" && "${SITE_HOST_NAME}" != "https://" && "${SITE_HOST_NAME}" != "http://" ]]; then
   if [[ "${SITE_HOST_NAME}" =~ ^https?://[^/]+ ]]; then
     echo "Setting host_name=${SITE_HOST_NAME}"
@@ -77,4 +138,4 @@ if [[ -n "${SITE_HOST_NAME}" && "${SITE_HOST_NAME}" != "https://" && "${SITE_HOS
   fi
 fi
 
-echo "Site bootstrap complete (apps: ${install_apps[*]})"
+echo "Site bootstrap complete (primary=${SITE_NAME} apps=${primary_apps[*]:-none})"

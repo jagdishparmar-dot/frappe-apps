@@ -1,0 +1,96 @@
+# Production-oriented Frappe v16 stack: hr_portal + CRM.
+# Apps and SPA assets are baked into the image at build time.
+# Only site data persists in the frappe-sites volume.
+#
+#   cd frappe-app/hr_portal
+#   docker compose build
+#   docker compose up -d
+#
+# Local development (bind-mount hr_portal source):
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+
+name: hr-portal
+
+services:
+  mariadb:
+    image: docker.io/mariadb:11.8
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --skip-character-set-client-handshake
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-admin}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-admin}
+      MARIADB_AUTO_UPGRADE: "1"
+    volumes:
+      - mariadb-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+
+  redis-cache:
+    image: docker.io/redis:7-alpine
+
+  redis-queue:
+    image: docker.io/redis:7-alpine
+
+  mailpit:
+    image: docker.io/axllent/mailpit:latest
+    profiles: ["dev", "mail"]
+    environment:
+      MP_MAX_MESSAGES: "5000"
+      MP_SMTP_AUTH_ACCEPT_ANY: "1"
+      MP_SMTP_AUTH_ALLOW_INSECURE: "1"
+    ports:
+      - "${MAILPIT_HTTP_PORT:-8025}:8025"
+
+  frappe:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        FRAPPE_BRANCH: ${FRAPPE_BRANCH:-version-16}
+        CRM_BRANCH: ${CRM_BRANCH:-main}
+    image: hr-portal-frappe:local
+    environment:
+      DB_HOST: mariadb
+      DB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+      SITE_NAME: ${SITE_NAME:-localhost}
+      SITE_HOSTNAME: ${SITE_HOSTNAME:-http://localhost:8000}
+      FRAPPE_ENV: ${FRAPPE_ENV:-production}
+      MIGRATE_ON_START: ${MIGRATE_ON_START:-1}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-0}
+      BUILD_ASSETS_ON_START: ${BUILD_ASSETS_ON_START:-0}
+      ALLOW_CORS: ${ALLOW_CORS:-}
+      MAIL_HOST: ${MAIL_HOST:-}
+      MAIL_PORT: ${MAIL_PORT:-587}
+    volumes:
+      - frappe-sites:/home/frappe/frappe-bench/sites
+    ports:
+      - "${FRAPPE_HTTP_PORT:-8000}:8000"
+      - "${FRAPPE_SOCKETIO_PORT:-9000}:9000"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      redis-cache:
+        condition: service_started
+      redis-queue:
+        condition: service_started
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -sf -H 'Host: localhost' http://127.0.0.1:8000/api/method/hr_portal.api.session.ping >/dev/null || exit 1",
+        ]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 180s
+
+volumes:
+  mariadb-data:
+  frappe-sites:

@@ -1,0 +1,19 @@
+# Development overrides: demo seed, mailpit, bind-mounted hr_portal source.
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+#
+# Rebuild HR SPA on the host (recommended) instead of inside the container:
+#   cd frontend && yarn build
+
+services:
+  mailpit:
+    profiles: []
+
+  frappe:
+    environment:
+      FRAPPE_ENV: development
+      SEED_DEMO_DATA: "1"
+      MIGRATE_ON_START: "1"
+      BUILD_ASSETS_ON_START: "0"
+    volumes:
+      - .:/home/frappe/frappe-bench/apps/hr_portal

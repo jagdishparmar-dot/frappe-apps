@@ -1,0 +1,305 @@
+/* HR Portal login restyle — scoped to Frappe /login only */
+
+body:has(.for-login) {
+  --hr-login-bg0: #0f1419;
+  --hr-login-bg1: #171d25;
+  --hr-login-bg2: #1e2630;
+  --hr-login-line: #334155;
+  --hr-login-text: #e8eef5;
+  --hr-login-muted: #94a3b8;
+  --hr-login-accent: #2dd4bf;
+  --hr-login-accent-dim: #0f766e;
+  --hr-login-danger-bg: rgba(248, 113, 113, 0.12);
+  --hr-login-danger: #f87171;
+  --hr-login-ok-bg: rgba(74, 222, 128, 0.12);
+  --hr-login-ok: #4ade80;
+  --hr-login-radius: 10px;
+  --hr-login-font: "IBM Plex Sans", "Segoe UI", sans-serif;
+
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(45, 212, 191, 0.12), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgba(56, 189, 248, 0.08), transparent 50%),
+    var(--hr-login-bg0) !important;
+  color: var(--hr-login-text);
+  font-family: var(--hr-login-font);
+}
+
+body:has(.for-login) .page-content-wrapper {
+  min-height: 100svh;
+  padding-top: 48px;
+}
+
+body:has(.for-login) .navbar,
+body:has(.for-login) .web-footer {
+  display: none !important;
+}
+
+.for-login,
+.for-forgot,
+.for-login-with-email-link,
+.for-signup,
+.for-email-login,
+.for-reset-password {
+  padding: 0 20px 48px;
+}
+
+.for-login .page-card,
+.for-forgot .page-card,
+.for-login-with-email-link .page-card,
+.for-signup .page-card,
+.for-email-login .page-card,
+.for-reset-password .page-card {
+  max-width: 400px;
+  padding: 28px;
+  background: var(--hr-login-bg1) !important;
+  border: 1px solid var(--hr-login-line);
+  border-radius: var(--hr-login-radius);
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
+}
+
+.for-login .page-card-head h4,
+.for-forgot .page-card-head h4,
+.for-login-with-email-link .page-card-head h4,
+.for-signup .page-card-head h4,
+.for-email-login .page-card-head h4,
+.for-reset-password .page-card-head h4 {
+  color: var(--hr-login-text) !important;
+}
+
+.for-login .page-card-subtitle,
+.for-forgot .page-card-subtitle,
+.for-login-with-email-link .page-card-subtitle,
+.for-signup .page-card-subtitle,
+.for-email-login .page-card-subtitle,
+.for-reset-password .page-card-subtitle {
+  color: var(--hr-login-muted) !important;
+}
+
+.for-login .page-card-head img.app-logo,
+.for-forgot .page-card-head img.app-logo,
+.for-login-with-email-link .page-card-head img.app-logo,
+.for-signup .page-card-head img.app-logo,
+.for-email-login .page-card-head img.app-logo,
+.for-reset-password .page-card-head img.app-logo {
+  max-height: 40px;
+  filter: brightness(1.05);
+}
+
+.for-login .form-label,
+.for-forgot .form-label,
+.for-login-with-email-link .form-label,
+.for-signup .form-label,
+.for-email-login .form-label,
+.for-reset-password .form-label {
+  color: var(--hr-login-muted) !important;
+}
+
+.for-login input[type="text"],
+.for-login input[type="email"],
+.for-login input[type="password"],
+.for-forgot input[type="text"],
+.for-forgot input[type="email"],
+.for-forgot input[type="password"],
+.for-login-with-email-link input[type="text"],
+.for-login-with-email-link input[type="email"],
+.for-login-with-email-link input[type="password"],
+.for-signup input[type="text"],
+.for-signup input[type="email"],
+.for-signup input[type="password"],
+.for-email-login input[type="text"],
+.for-email-login input[type="email"],
+.for-email-login input[type="password"],
+.for-reset-password input[type="text"],
+.for-reset-password input[type="email"],
+.for-reset-password input[type="password"] {
+  height: 40px !important;
+  padding: 8px 12px 8px 38px !important;
+  color: var(--hr-login-text) !important;
+  background: var(--hr-login-bg2) !important;
+  border: 1px solid var(--hr-login-line) !important;
+  border-radius: 8px !important;
+  box-shadow: none !important;
+}
+
+.for-login input:focus,
+.for-forgot input:focus,
+.for-login-with-email-link input:focus,
+.for-signup input:focus,
+.for-email-login input:focus,
+.for-reset-password input:focus {
+  outline: none;
+  border-color: var(--hr-login-accent) !important;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.15) !important;
+}
+
+.for-login .field-icon,
+.for-forgot .field-icon,
+.for-login-with-email-link .field-icon,
+.for-signup .field-icon,
+.for-email-login .field-icon,
+.for-reset-password .field-icon,
+.for-login .toggle-password,
+.for-forgot .toggle-password,
+.for-login-with-email-link .toggle-password,
+.for-signup .toggle-password,
+.for-email-login .toggle-password,
+.for-reset-password .toggle-password {
+  fill: var(--hr-login-muted) !important;
+}
+
+.for-login .btn-login,
+.for-forgot .btn-login,
+.for-login-with-email-link .btn-login,
+.for-signup .btn-login,
+.for-email-login .btn-login,
+.for-reset-password .btn-login,
+.for-login .btn-ldap-login,
+.for-forgot .btn-ldap-login,
+.for-login-with-email-link .btn-ldap-login,
+.for-signup .btn-ldap-login,
+.for-email-login .btn-ldap-login,
+.for-reset-password .btn-ldap-login {
+  min-height: 40px;
+  padding: 10px 14px !important;
+  color: #042f2e !important;
+  background: var(--hr-login-accent) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  font-weight: 600;
+  box-shadow: none !important;
+}
+
+.for-login .btn-login:hover,
+.for-forgot .btn-login:hover,
+.for-login-with-email-link .btn-login:hover,
+.for-signup .btn-login:hover,
+.for-email-login .btn-login:hover,
+.for-reset-password .btn-login:hover,
+.for-login .btn-ldap-login:hover,
+.for-forgot .btn-ldap-login:hover,
+.for-login-with-email-link .btn-ldap-login:hover,
+.for-signup .btn-ldap-login:hover,
+.for-email-login .btn-ldap-login:hover,
+.for-reset-password .btn-ldap-login:hover,
+.for-login .btn-login:focus,
+.for-forgot .btn-login:focus,
+.for-login-with-email-link .btn-login:focus,
+.for-signup .btn-login:focus,
+.for-email-login .btn-login:focus,
+.for-reset-password .btn-login:focus,
+.for-login .btn-ldap-login:focus,
+.for-forgot .btn-ldap-login:focus,
+.for-login-with-email-link .btn-ldap-login:focus,
+.for-signup .btn-ldap-login:focus,
+.for-email-login .btn-ldap-login:focus,
+.for-reset-password .btn-ldap-login:focus {
+  color: #042f2e !important;
+  background: #5eead4 !important;
+}
+
+.for-login .btn-login-option,
+.for-forgot .btn-login-option,
+.for-login-with-email-link .btn-login-option,
+.for-signup .btn-login-option,
+.for-email-login .btn-login-option,
+.for-reset-password .btn-login-option {
+  min-height: 40px;
+  color: var(--hr-login-text) !important;
+  background: var(--hr-login-bg2) !important;
+  border: 1px solid var(--hr-login-line) !important;
+  border-radius: 8px !important;
+}
+
+.for-login .btn-login-option:hover,
+.for-forgot .btn-login-option:hover,
+.for-login-with-email-link .btn-login-option:hover,
+.for-signup .btn-login-option:hover,
+.for-email-login .btn-login-option:hover,
+.for-reset-password .btn-login-option:hover {
+  background: var(--hr-login-bg3, #273140) !important;
+  border-color: #475569 !important;
+}
+
+.for-login .forgot-password-message a,
+.for-forgot .forgot-password-message a,
+.for-login-with-email-link .forgot-password-message a,
+.for-signup .forgot-password-message a,
+.for-email-login .forgot-password-message a,
+.for-reset-password .forgot-password-message a,
+.for-login .sign-up-message a,
+.for-forgot .sign-up-message a,
+.for-login-with-email-link .sign-up-message a,
+.for-signup .sign-up-message a,
+.for-email-login .sign-up-message a,
+.for-reset-password .sign-up-message a {
+  color: var(--hr-login-accent) !important;
+}
+
+.for-login .sign-up-message,
+.for-forgot .sign-up-message,
+.for-login-with-email-link .sign-up-message,
+.for-signup .sign-up-message,
+.for-email-login .sign-up-message,
+.for-reset-password .sign-up-message {
+  color: var(--hr-login-muted) !important;
+}
+
+.for-login .login-error-banner,
+.for-forgot .login-error-banner,
+.for-login-with-email-link .login-error-banner,
+.for-signup .login-error-banner,
+.for-email-login .login-error-banner,
+.for-reset-password .login-error-banner {
+  background: var(--hr-login-danger-bg) !important;
+  color: var(--hr-login-danger) !important;
+  border: 1px solid rgba(248, 113, 113, 0.25);
+}
+
+.for-login .login-error-banner svg,
+.for-forgot .login-error-banner svg,
+.for-login-with-email-link .login-error-banner svg,
+.for-signup .login-error-banner svg,
+.for-email-login .login-error-banner svg,
+.for-reset-password .login-error-banner svg {
+  fill: var(--hr-login-danger) !important;
+}
+
+.for-login .login-success-banner,
+.for-forgot .login-success-banner,
+.for-login-with-email-link .login-success-banner,
+.for-signup .login-success-banner,
+.for-email-login .login-success-banner,
+.for-reset-password .login-success-banner {
+  background: var(--hr-login-ok-bg) !important;
+  color: var(--hr-login-ok) !important;
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+
+.for-login .field-error,
+.for-forgot .field-error,
+.for-login-with-email-link .field-error,
+.for-signup .field-error,
+.for-email-login .field-error,
+.for-reset-password .field-error {
+  color: var(--hr-login-danger) !important;
+}
+
+@media (max-width: 575px) {
+  body:has(.for-login) .page-content-wrapper {
+    padding-top: 0;
+  }
+
+  .for-login .page-card,
+  .for-forgot .page-card,
+  .for-login-with-email-link .page-card,
+  .for-signup .page-card,
+  .for-email-login .page-card,
+  .for-reset-password .page-card {
+    min-height: 100svh;
+    max-width: 100%;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 56px 24px 32px;
+  }
+}

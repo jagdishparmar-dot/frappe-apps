@@ -24,6 +24,8 @@ website_route_rules = [
 	{"from_route": "/hr/<path:app_path>", "to_route": "hr"},
 ]
 
+web_include_css = "/assets/hr_portal/css/login.css"
+
 role_home_page = {
 	"HR Admin": "hr",
 	"HR Manager": "hr",
