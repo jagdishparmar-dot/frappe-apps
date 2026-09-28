@@ -1,0 +1,75 @@
+{
+ "actions": [],
+ "creation": "2026-09-26 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "attendance_section",
+  "geofence_policy",
+  "auth_section",
+  "otp_expiry_minutes",
+  "otp_max_attempts"
+ ],
+ "fields": [
+  {
+   "fieldname": "attendance_section",
+   "fieldtype": "Section Break",
+   "label": "Attendance"
+  },
+  {
+   "default": "Reject",
+   "description": "Default when Company and Employee leave the policy blank. Reject: the punch is refused. Flag: the punch is recorded with Within Geofence unchecked for HR review. Employee overrides Company, which overrides this default.",
+   "fieldname": "geofence_policy",
+   "fieldtype": "Select",
+   "label": "Default Out-of-Geofence Policy",
+   "options": "Reject\nFlag",
+   "reqd": 1
+  },
+  {
+   "fieldname": "auth_section",
+   "fieldtype": "Section Break",
+   "label": "Mobile Login (OTP)"
+  },
+  {
+   "default": "5",
+   "fieldname": "otp_expiry_minutes",
+   "fieldtype": "Int",
+   "label": "OTP Expiry (minutes)",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "default": "5",
+   "fieldname": "otp_max_attempts",
+   "fieldtype": "Int",
+   "label": "Max Verification Attempts per OTP",
+   "non_negative": 1,
+   "reqd": 1
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-09-26 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "HRMS Custom",
+ "name": "HRMS Custom Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "read": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "HR Admin",
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

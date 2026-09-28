@@ -1,0 +1,107 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:holiday_list_name",
+ "creation": "2026-09-26 17:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "holiday_list_name",
+  "company",
+  "column_break_dates",
+  "from_date",
+  "to_date",
+  "holidays_section",
+  "holidays"
+ ],
+ "fields": [
+  {
+   "fieldname": "holiday_list_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Holiday List Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "fieldname": "column_break_dates",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "from_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "From Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "to_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "To Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "holidays_section",
+   "fieldtype": "Section Break",
+   "label": "Holidays"
+  },
+  {
+   "fieldname": "holidays",
+   "fieldtype": "Table",
+   "label": "Holidays",
+   "options": "Holiday"
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-26 17:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "HRMS Custom",
+ "name": "Holiday List",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Admin",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Executive",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Employee"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

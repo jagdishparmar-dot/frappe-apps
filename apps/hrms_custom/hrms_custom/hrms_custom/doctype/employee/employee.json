@@ -1,0 +1,473 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "HR-EMP-.#####",
+ "creation": "2026-09-26 14:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "basic_section",
+  "first_name",
+  "middle_name",
+  "last_name",
+  "employee_name",
+  "column_break_basic",
+  "gender",
+  "date_of_birth",
+  "marital_status",
+  "blood_group",
+  "nationality",
+  "image",
+  "employment_section",
+  "company",
+  "status",
+  "date_of_joining",
+  "relieving_date",
+  "column_break_employment",
+  "department",
+  "designation",
+  "branch",
+  "reports_to",
+  "employee_type",
+  "vendor",
+  "other_employee_type",
+  "attendance_section",
+  "geofence_policy",
+  "onboarding_section",
+  "onboarding_status",
+  "column_break_onboarding",
+  "onboarding_submitted_on",
+  "contact_section",
+  "user_id",
+  "cell_number",
+  "column_break_contact",
+  "company_email",
+  "personal_email",
+  "address_section",
+  "current_address",
+  "column_break_address",
+  "permanent_address",
+  "emergency_section",
+  "emergency_contact_name",
+  "emergency_contact_relation",
+  "column_break_emergency",
+  "emergency_contact_phone",
+  "bank_section",
+  "account_holder_name",
+  "bank_name",
+  "column_break_bank",
+  "bank_account_no",
+  "ifsc_code"
+ ],
+ "fields": [
+  {
+   "fieldname": "basic_section",
+   "fieldtype": "Section Break",
+   "label": "Basic Details"
+  },
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Data",
+   "label": "First Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "middle_name",
+   "fieldtype": "Data",
+   "label": "Middle Name"
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Data",
+   "label": "Last Name"
+  },
+  {
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_global_search": 1,
+   "in_list_view": 1,
+   "label": "Full Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_basic",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "gender",
+   "fieldtype": "Link",
+   "label": "Gender",
+   "options": "Gender"
+  },
+  {
+   "description": "Required once onboarding details are submitted",
+   "fieldname": "date_of_birth",
+   "fieldtype": "Date",
+   "label": "Date of Birth",
+   "mandatory_depends_on": "eval:doc.status == \"Active\" || [\"Pending Verification\", \"Verified\"].includes(doc.onboarding_status)"
+  },
+  {
+   "fieldname": "marital_status",
+   "fieldtype": "Select",
+   "label": "Marital Status",
+   "options": "\nSingle\nMarried\nDivorced\nWidowed"
+  },
+  {
+   "fieldname": "blood_group",
+   "fieldtype": "Select",
+   "label": "Blood Group",
+   "options": "\nA+\nA-\nB+\nB-\nAB+\nAB-\nO+\nO-"
+  },
+  {
+   "fieldname": "nationality",
+   "fieldtype": "Data",
+   "label": "Nationality"
+  },
+  {
+   "fieldname": "image",
+   "fieldtype": "Attach Image",
+   "hidden": 1,
+   "label": "Image"
+  },
+  {
+   "fieldname": "employment_section",
+   "fieldtype": "Section Break",
+   "label": "Employment"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1
+  },
+  {
+   "default": "Active",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Active\nInactive\nSuspended\nLeft",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "date_of_joining",
+   "fieldtype": "Date",
+   "label": "Date of Joining",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.status == \"Left\"",
+   "fieldname": "relieving_date",
+   "fieldtype": "Date",
+   "label": "Relieving Date",
+   "mandatory_depends_on": "eval:doc.status == \"Left\""
+  },
+  {
+   "fieldname": "column_break_employment",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "department",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Department",
+   "options": "Department"
+  },
+  {
+   "fieldname": "designation",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Designation",
+   "options": "Designation"
+  },
+  {
+   "fieldname": "branch",
+   "fieldtype": "Link",
+   "label": "Branch",
+   "options": "Branch"
+  },
+  {
+   "fieldname": "reports_to",
+   "fieldtype": "Link",
+   "label": "Reports To",
+   "options": "Employee"
+  },
+  {
+   "default": "Permanent",
+   "description": "Permanent staff, 3PL / contract staff (needs a vendor), or another category.",
+   "fieldname": "employee_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee Type",
+   "options": "Permanent\nContract\nOther",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.employee_type==\"Contract\"",
+   "description": "3PL or staffing vendor this contract employee belongs to.",
+   "fieldname": "vendor",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Vendor",
+   "mandatory_depends_on": "eval:doc.employee_type==\"Contract\"",
+   "options": "Vendor"
+  },
+  {
+   "depends_on": "eval:doc.employee_type==\"Other\"",
+   "description": "e.g. Intern, Consultant, Apprentice, Temporary.",
+   "fieldname": "other_employee_type",
+   "fieldtype": "Data",
+   "label": "Other Type",
+   "mandatory_depends_on": "eval:doc.employee_type==\"Other\""
+  },
+  {
+   "fieldname": "attendance_section",
+   "fieldtype": "Section Break",
+   "label": "Attendance"
+  },
+  {
+   "description": "Leave blank to use the company policy (or HRMS Custom Settings). Reject: punch must be inside a mapped geofence (typical for field staff). Flag: punch outside is recorded and marked for HR review (typical for office staff).",
+   "fieldname": "geofence_policy",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Out-of-Geofence Punch Policy",
+   "options": "\nReject\nFlag"
+  },
+  {
+   "collapsible": 1,
+   "collapsible_depends_on": "onboarding_status",
+   "fieldname": "onboarding_section",
+   "fieldtype": "Section Break",
+   "label": "Onboarding"
+  },
+  {
+   "description": "Invited: the joiner can log in to the mobile app and fill the onboarding form. Pending Verification: submitted, awaiting HR review.",
+   "fieldname": "onboarding_status",
+   "fieldtype": "Select",
+   "in_standard_filter": 1,
+   "label": "Onboarding Status",
+   "options": "\nInvited\nPending Verification\nVerified",
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_onboarding",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "onboarding_submitted_on",
+   "fieldtype": "Datetime",
+   "label": "Onboarding Submitted On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contact_section",
+   "fieldtype": "Section Break",
+   "label": "Login & Contact"
+  },
+  {
+   "description": "The login used by this employee on the mobile app and portal",
+   "fieldname": "user_id",
+   "fieldtype": "Link",
+   "label": "User",
+   "options": "User",
+   "unique": 1
+  },
+  {
+   "description": "Used for OTP login",
+   "fieldname": "cell_number",
+   "fieldtype": "Data",
+   "label": "Mobile",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "column_break_contact",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company_email",
+   "fieldtype": "Data",
+   "label": "Company Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "personal_email",
+   "fieldtype": "Data",
+   "label": "Personal Email",
+   "options": "Email"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "address_section",
+   "fieldtype": "Section Break",
+   "label": "Address"
+  },
+  {
+   "fieldname": "current_address",
+   "fieldtype": "Small Text",
+   "label": "Current Address"
+  },
+  {
+   "fieldname": "column_break_address",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "permanent_address",
+   "fieldtype": "Small Text",
+   "label": "Permanent Address"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "emergency_section",
+   "fieldtype": "Section Break",
+   "label": "Emergency Contact"
+  },
+  {
+   "fieldname": "emergency_contact_name",
+   "fieldtype": "Data",
+   "label": "Name"
+  },
+  {
+   "fieldname": "emergency_contact_relation",
+   "fieldtype": "Data",
+   "label": "Relation"
+  },
+  {
+   "fieldname": "column_break_emergency",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "emergency_contact_phone",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "options": "Phone"
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "bank_section",
+   "fieldtype": "Section Break",
+   "label": "Bank Details"
+  },
+  {
+   "fieldname": "account_holder_name",
+   "fieldtype": "Data",
+   "label": "Account Holder Name"
+  },
+  {
+   "fieldname": "bank_name",
+   "fieldtype": "Data",
+   "label": "Bank Name"
+  },
+  {
+   "fieldname": "column_break_bank",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "bank_account_no",
+   "fieldtype": "Data",
+   "label": "Account Number"
+  },
+  {
+   "fieldname": "ifsc_code",
+   "fieldtype": "Data",
+   "label": "IFSC Code"
+  }
+ ],
+ "image_field": "image",
+ "links": [
+  {
+   "link_doctype": "Employee Checkin",
+   "link_fieldname": "employee"
+  },
+  {
+   "link_doctype": "Employee Geofence Map",
+   "link_fieldname": "employee"
+  },
+  {
+   "link_doctype": "Employee Document",
+   "link_fieldname": "employee"
+  },
+  {
+   "link_doctype": "Onboarding Checklist",
+   "link_fieldname": "employee"
+  },
+  {
+   "link_doctype": "Profile Update Request",
+   "link_fieldname": "employee"
+  },
+  {
+   "link_doctype": "Shift Assignment",
+   "link_fieldname": "employee"
+  },
+  {
+   "link_doctype": "Shift Roster",
+   "link_fieldname": "employee"
+  },
+  {
+   "link_doctype": "Leave Allocation",
+   "link_fieldname": "employee"
+  },
+  {
+   "link_doctype": "Leave Application",
+   "link_fieldname": "employee"
+  },
+  {
+   "link_doctype": "Attendance Regularization",
+   "link_fieldname": "employee"
+  }
+ ],
+ "modified": "2026-09-28 19:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "HRMS Custom",
+ "name": "Employee",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Admin",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Executive",
+   "write": 1
+  }
+ ],
+ "search_fields": "employee_name,department,designation,employee_type,vendor",
+ "show_title_field_in_link": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

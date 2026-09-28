@@ -1,0 +1,72 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:designation_name",
+ "creation": "2026-09-26 14:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "designation_name",
+  "description"
+ ],
+ "fields": [
+  {
+   "fieldname": "designation_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Designation",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description"
+  }
+ ],
+ "links": [
+  {
+   "link_doctype": "Employee",
+   "link_fieldname": "designation"
+  }
+ ],
+ "modified": "2026-09-26 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "HRMS Custom",
+ "name": "Designation",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Admin",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "HR Executive"
+  },
+  {
+   "read": 1,
+   "role": "Employee"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

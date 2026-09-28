@@ -1,0 +1,80 @@
+.page-container[data-page-route="shift-roster-planner"] {
+	padding: 0 var(--padding-xl, 24px);
+}
+
+.page-container[data-page-route="shift-roster-planner"] .page-head .page-head-content {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.page-container[data-page-route="shift-roster-planner"] .page-title,
+.page-container[data-page-route="shift-roster-planner"] .page-form {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.roster-planner {
+	padding: var(--padding-md, 16px) 0 var(--padding-xl, 24px);
+}
+
+.roster-planner-meta {
+	padding: 0 0 0.75rem;
+}
+
+.roster-planner-wrap {
+	overflow: auto;
+	max-height: calc(100vh - 220px);
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius-md, 8px);
+	background: var(--fg-color);
+}
+
+.roster-planner-table {
+	border-collapse: separate;
+	border-spacing: 0;
+	min-width: 100%;
+}
+
+.roster-planner-table th,
+.roster-planner-table td {
+	min-width: 96px;
+	padding: 6px 8px;
+	border-bottom: 1px solid var(--border-color);
+	border-right: 1px solid var(--border-color);
+	vertical-align: middle;
+	background: var(--fg-color);
+}
+
+.roster-planner-table thead th {
+	position: sticky;
+	top: 0;
+	z-index: 2;
+	background: var(--subtle-fg, var(--fg-color));
+	font-size: 12px;
+	text-align: center;
+}
+
+.roster-planner-table th.sticky,
+.roster-planner-table td.sticky {
+	position: sticky;
+	left: 0;
+	z-index: 3;
+	min-width: 180px;
+	background: var(--fg-color);
+	text-align: left;
+}
+
+.roster-planner-table thead th.sticky {
+	z-index: 4;
+}
+
+.roster-planner-table th.holiday,
+.roster-planner-table td.holiday {
+	background: var(--yellow-50, #fff8e1);
+}
+
+.roster-planner-table select.roster-cell {
+	min-width: 80px;
+	padding: 2px 4px;
+	font-size: 12px;
+}

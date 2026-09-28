@@ -1,0 +1,66 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:branch",
+ "creation": "2026-09-26 14:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "branch"
+ ],
+ "fields": [
+  {
+   "fieldname": "branch",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Branch",
+   "reqd": 1,
+   "unique": 1
+  }
+ ],
+ "links": [
+  {
+   "link_doctype": "Employee",
+   "link_fieldname": "branch"
+  }
+ ],
+ "modified": "2026-09-26 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "HRMS Custom",
+ "name": "Branch",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Admin",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "HR Executive"
+  },
+  {
+   "read": 1,
+   "role": "Employee"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

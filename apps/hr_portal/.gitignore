@@ -1,9 +1,0 @@
-__pycache__/
-*.py[cod]
-*.egg-info/
-.DS_Store
-node_modules/
-frontend/dist/
-hr_portal/public/frontend/**/*.map
-*.log
-.vscode/

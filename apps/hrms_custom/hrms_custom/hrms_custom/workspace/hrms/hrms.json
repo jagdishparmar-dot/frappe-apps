@@ -1,0 +1,499 @@
+{
+ "app": "hrms_custom",
+ "charts": [],
+ "content": "[{\"id\":\"hrms-hdr-today\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Today</b></span>\",\"col\":12}},{\"id\":\"hrms-nc-0\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today Present\",\"col\":3}},{\"id\":\"hrms-nc-1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today Late\",\"col\":3}},{\"id\":\"hrms-nc-2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today Absent\",\"col\":3}},{\"id\":\"hrms-nc-3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Today On Leave\",\"col\":3}},{\"id\":\"hrms-hdr-pending\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Pending actions</b></span>\",\"col\":12}},{\"id\":\"hrms-nc-p-0\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Open Leave Applications\",\"col\":3}},{\"id\":\"hrms-nc-p-1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Open Regularizations\",\"col\":3}},{\"id\":\"hrms-nc-p-2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending Documents\",\"col\":3}},{\"id\":\"hrms-nc-p-3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Pending Profile Updates\",\"col\":3}},{\"id\":\"hrms-nc-p-4\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Onboarding to Verify\",\"col\":3}},{\"id\":\"hrms-hdr-review\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Needs your review</b></span>\",\"col\":12}},{\"id\":\"hrms-ql-0\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Open Leave Applications\",\"col\":6}},{\"id\":\"hrms-ql-1\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Open Regularizations\",\"col\":6}},{\"id\":\"hrms-ql-2\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Pending Documents\",\"col\":6}},{\"id\":\"hrms-ql-3\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Pending Profile Updates\",\"col\":6}},{\"id\":\"hrms-hdr-1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Your Shortcuts</b></span>\",\"col\":12}},{\"id\":\"hrms-sc-1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employee\",\"col\":3}},{\"id\":\"hrms-sc-docs\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Documents\",\"col\":3}},{\"id\":\"hrms-sc-2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Employee Checkin\",\"col\":3}},{\"id\":\"hrms-sc-roster\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Roster Planner\",\"col\":3}},{\"id\":\"hrms-sc-live\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Live Attendance\",\"col\":3}},{\"id\":\"hrms-sc-leave\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Leave Applications\",\"col\":3}},{\"id\":\"hrms-sc-reg\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Regularizations\",\"col\":3}},{\"id\":\"hrms-sc-profile\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Profile Updates\",\"col\":3}},{\"id\":\"hrms-sp-1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"hrms-hdr-2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Masters</b></span>\",\"col\":12}},{\"id\":\"hrms-card-1\",\"type\":\"card\",\"data\":{\"card_name\":\"Employees\",\"col\":4}},{\"id\":\"hrms-card-docs\",\"type\":\"card\",\"data\":{\"card_name\":\"Documents\",\"col\":4}},{\"id\":\"hrms-card-2\",\"type\":\"card\",\"data\":{\"card_name\":\"Attendance\",\"col\":4}},{\"id\":\"hrms-card-shifts\",\"type\":\"card\",\"data\":{\"card_name\":\"Shifts\",\"col\":4}},{\"id\":\"hrms-card-leave\",\"type\":\"card\",\"data\":{\"card_name\":\"Leave\",\"col\":4}},{\"id\":\"hrms-card-reports\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":4}},{\"id\":\"hrms-card-3\",\"type\":\"card\",\"data\":{\"card_name\":\"Organisation\",\"col\":4}}]",
+ "creation": "2026-09-26 14:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "users",
+ "idx": 0,
+ "is_hidden": 0,
+ "label": "HRMS",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employees",
+   "link_count": 3,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee",
+   "link_count": 0,
+   "link_to": "Employee",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Onboarding Checklist",
+   "link_count": 0,
+   "link_to": "Onboarding Checklist",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Profile Update Request",
+   "link_count": 0,
+   "link_to": "Profile Update Request",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Documents",
+   "link_count": 1,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Document",
+   "link_count": 0,
+   "link_to": "Employee Document",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Attendance",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Checkin",
+   "link_count": 0,
+   "link_to": "Employee Checkin",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Attendance Regularization",
+   "link_count": 0,
+   "link_to": "Attendance Regularization",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Live Attendance",
+   "link_count": 0,
+   "link_to": "live-attendance",
+   "link_type": "Page",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Geofence Location",
+   "link_count": 0,
+   "link_to": "Geofence Location",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Employee Geofence Map",
+   "link_count": 0,
+   "link_to": "Employee Geofence Map",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Shifts",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Shift Roster Planner",
+   "link_count": 0,
+   "link_to": "shift-roster-planner",
+   "link_type": "Page",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Shift Roster",
+   "link_count": 0,
+   "link_to": "Shift Roster",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Shift Type",
+   "link_count": 0,
+   "link_to": "Shift Type",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Shift Assignment",
+   "link_count": 0,
+   "link_to": "Shift Assignment",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Holiday List",
+   "link_count": 0,
+   "link_to": "Holiday List",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Leave",
+   "link_count": 3,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Leave Application",
+   "link_count": 0,
+   "link_to": "Leave Application",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Leave Allocation",
+   "link_count": 0,
+   "link_to": "Leave Allocation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Leave Type",
+   "link_count": 0,
+   "link_to": "Leave Type",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 7,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Attendance Summary",
+   "link_count": 0,
+   "link_to": "Attendance Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Employee Date-wise Attendance",
+   "link_count": 0,
+   "link_to": "Employee Date-wise Attendance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Punch Log",
+   "link_count": 0,
+   "link_to": "Punch Log",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Late Coming / Early Going",
+   "link_count": 0,
+   "link_to": "Late Coming / Early Going",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Leave Balance",
+   "link_count": 0,
+   "link_to": "Leave Balance",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Employee Master",
+   "link_count": 0,
+   "link_to": "Employee Master",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Onboarding Status",
+   "link_count": 0,
+   "link_to": "Onboarding Status",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Organisation",
+   "link_count": 5,
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Company",
+   "link_count": 0,
+   "link_to": "Company",
+   "link_type": "DocType",
+   "onboard": 1,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Department",
+   "link_count": 0,
+   "link_to": "Department",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Designation",
+   "link_count": 0,
+   "link_to": "Designation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Branch",
+   "link_count": 0,
+   "link_to": "Branch",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Vendor",
+   "link_count": 0,
+   "link_to": "Vendor",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-09-28 19:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "HRMS Custom",
+ "name": "HRMS",
+ "number_cards": [
+  {
+   "label": "Today Present",
+   "number_card_name": "Today Present"
+  },
+  {
+   "label": "Today Late",
+   "number_card_name": "Today Late"
+  },
+  {
+   "label": "Today Absent",
+   "number_card_name": "Today Absent"
+  },
+  {
+   "label": "Today On Leave",
+   "number_card_name": "Today On Leave"
+  },
+  {
+   "label": "Open Leave Applications",
+   "number_card_name": "Open Leave Applications"
+  },
+  {
+   "label": "Open Regularizations",
+   "number_card_name": "Open Regularizations"
+  },
+  {
+   "label": "Pending Documents",
+   "number_card_name": "Pending Documents"
+  },
+  {
+   "label": "Pending Profile Updates",
+   "number_card_name": "Pending Profile Updates"
+  },
+  {
+   "label": "Onboarding to Verify",
+   "number_card_name": "Onboarding to Verify"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "Leave Application",
+   "label": "Open Leave Applications",
+   "quick_list_filter": "[[\"Leave Application\",\"status\",\"=\",\"Open\"]]"
+  },
+  {
+   "document_type": "Attendance Regularization",
+   "label": "Open Regularizations",
+   "quick_list_filter": "[[\"Attendance Regularization\",\"status\",\"=\",\"Open\"]]"
+  },
+  {
+   "document_type": "Employee Document",
+   "label": "Pending Documents",
+   "quick_list_filter": "[[\"Employee Document\",\"status\",\"=\",\"Pending\"]]"
+  },
+  {
+   "document_type": "Profile Update Request",
+   "label": "Pending Profile Updates",
+   "quick_list_filter": "[[\"Profile Update Request\",\"status\",\"=\",\"Pending\"]]"
+  }
+ ],
+ "roles": [],
+ "sequence_id": 1.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Employee",
+   "link_to": "Employee",
+   "type": "DocType"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "Documents",
+   "link_to": "Employee Document",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "label": "Employee Checkin",
+   "link_to": "Employee Checkin",
+   "type": "DocType"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "label": "Roster Planner",
+   "link_to": "shift-roster-planner",
+   "type": "Page"
+  },
+  {
+   "color": "Green",
+   "doc_view": "",
+   "label": "Live Attendance",
+   "link_to": "live-attendance",
+   "type": "Page"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "label": "Profile Updates",
+   "link_to": "Profile Update Request",
+   "type": "DocType"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "label": "Leave Applications",
+   "link_to": "Leave Application",
+   "type": "DocType"
+  },
+  {
+   "color": "Green",
+   "doc_view": "",
+   "label": "Attendance Summary",
+   "link_to": "Attendance Summary",
+   "type": "Report"
+  },
+  {
+   "color": "Red",
+   "doc_view": "List",
+   "label": "Regularizations",
+   "link_to": "Attendance Regularization",
+   "type": "DocType"
+  }
+ ],
+ "title": "HRMS",
+ "type": "Workspace"
+}

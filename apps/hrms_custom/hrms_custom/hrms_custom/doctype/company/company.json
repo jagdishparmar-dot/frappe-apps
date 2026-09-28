@@ -1,0 +1,133 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:company_name",
+ "creation": "2026-09-26 14:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "company_name",
+  "abbr",
+  "country",
+  "column_break_contact",
+  "email",
+  "phone_no",
+  "attendance_section",
+  "geofence_policy",
+  "holiday_list"
+ ],
+ "fields": [
+  {
+   "fieldname": "company_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Company Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "abbr",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Abbreviation",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "country",
+   "fieldtype": "Link",
+   "label": "Country",
+   "options": "Country"
+  },
+  {
+   "fieldname": "column_break_contact",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "Email",
+   "options": "Email"
+  },
+  {
+   "fieldname": "phone_no",
+   "fieldtype": "Data",
+   "label": "Phone",
+   "options": "Phone"
+  },
+  {
+   "fieldname": "attendance_section",
+   "fieldtype": "Section Break",
+   "label": "Attendance"
+  },
+  {
+   "description": "Leave blank to use HRMS Custom Settings. An Employee record can override this: Reject for field staff who must punch on site, Flag for office staff who may punch outside the fence.",
+   "fieldname": "geofence_policy",
+   "fieldtype": "Select",
+   "label": "Out-of-Geofence Punch Policy",
+   "options": "\nReject\nFlag"
+  },
+  {
+   "fieldname": "holiday_list",
+   "fieldtype": "Link",
+   "label": "Holiday List",
+   "options": "Holiday List"
+  }
+ ],
+ "links": [
+  {
+   "link_doctype": "Employee",
+   "link_fieldname": "company"
+  },
+  {
+   "link_doctype": "Department",
+   "link_fieldname": "company"
+  },
+  {
+   "link_doctype": "Geofence Location",
+   "link_fieldname": "company"
+  }
+ ],
+ "modified": "2026-09-26 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "HRMS Custom",
+ "name": "Company",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Admin",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "report": 1,
+   "role": "HR Executive"
+  },
+  {
+   "read": 1,
+   "role": "Employee"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,206 @@
+{
+ "actions": [],
+ "autoname": "AR-.YYYY.-.#####",
+ "creation": "2026-09-26 21:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "employee",
+  "employee_name",
+  "date",
+  "column_break_status",
+  "status",
+  "company",
+  "times_section",
+  "requested_check_in",
+  "column_break_out",
+  "requested_check_out",
+  "reason_section",
+  "reason",
+  "remarks",
+  "reviewed_by",
+  "reviewed_on",
+  "applied_in",
+  "applied_out"
+ ],
+ "fields": [
+  {
+   "fieldname": "employee",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Employee",
+   "options": "Employee",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fetch_from": "employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_status",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Open",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Open\nApproved\nRejected\nCancelled",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "employee.company",
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "times_section",
+   "fieldtype": "Section Break",
+   "label": "Requested Times"
+  },
+  {
+   "fieldname": "requested_check_in",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Requested Check In"
+  },
+  {
+   "fieldname": "column_break_out",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "requested_check_out",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Requested Check Out"
+  },
+  {
+   "fieldname": "reason_section",
+   "fieldtype": "Section Break",
+   "label": "Reason"
+  },
+  {
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "reqd": 1
+  },
+  {
+   "description": "Shown to the employee. Required when rejecting.",
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks",
+   "mandatory_depends_on": "eval:doc.status == \"Rejected\""
+  },
+  {
+   "fieldname": "reviewed_by",
+   "fieldtype": "Link",
+   "label": "Reviewed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "reviewed_on",
+   "fieldtype": "Datetime",
+   "label": "Reviewed On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "applied_in",
+   "fieldtype": "Link",
+   "label": "Applied IN Checkin",
+   "options": "Employee Checkin",
+   "read_only": 1
+  },
+  {
+   "fieldname": "applied_out",
+   "fieldtype": "Link",
+   "label": "Applied OUT Checkin",
+   "options": "Employee Checkin",
+   "read_only": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-09-26 21:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "HRMS Custom",
+ "name": "Attendance Regularization",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Admin",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Executive",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "read": 1,
+   "role": "Employee",
+   "select": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [
+  {
+   "color": "Blue",
+   "title": "Open"
+  },
+  {
+   "color": "Green",
+   "title": "Approved"
+  },
+  {
+   "color": "Red",
+   "title": "Rejected"
+  },
+  {
+   "color": "Gray",
+   "title": "Cancelled"
+  }
+ ],
+ "title_field": "employee_name",
+ "track_changes": 1
+}

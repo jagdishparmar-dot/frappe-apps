@@ -1,0 +1,204 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:shift_name",
+ "creation": "2026-09-26 17:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "shift_name",
+  "company",
+  "is_active",
+  "column_break_time",
+  "start_time",
+  "end_time",
+  "is_overnight",
+  "grace_minutes",
+  "early_exit_grace_minutes",
+  "hours_section",
+  "working_hours",
+  "allow_flexible_hours",
+  "column_break_hours",
+  "minimum_hours_present",
+  "minimum_hours_half_day",
+  "color",
+  "location_section",
+  "location",
+  "holiday_list"
+ ],
+ "fields": [
+  {
+   "fieldname": "shift_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Shift Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Company",
+   "options": "Company"
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "column_break_time",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "start_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Start Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "end_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "End Time",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "description": "Set automatically when end time is earlier than start time (shift crosses midnight).",
+   "fieldname": "is_overnight",
+   "fieldtype": "Check",
+   "label": "Overnight Shift",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "Minutes after start time before a punch is treated as late.",
+   "fieldname": "grace_minutes",
+   "fieldtype": "Int",
+   "label": "Late Coming Grace (Minutes)"
+  },
+  {
+   "default": "0",
+   "description": "Minutes before end time that still count as on-time punch-out.",
+   "fieldname": "early_exit_grace_minutes",
+   "fieldtype": "Int",
+   "label": "Early Going Grace (Minutes)"
+  },
+  {
+   "fieldname": "hours_section",
+   "fieldtype": "Section Break",
+   "label": "Hours"
+  },
+  {
+   "description": "Expected shift length. Filled from start and end time when left empty.",
+   "fieldname": "working_hours",
+   "fieldtype": "Float",
+   "label": "Working Hours",
+   "precision": "2"
+  },
+  {
+   "default": "0",
+   "description": "When enabled, a late IN still counts as Present if minimum hours are met. Late minutes are still recorded.",
+   "fieldname": "allow_flexible_hours",
+   "fieldtype": "Check",
+   "label": "Allow Flexible Hours"
+  },
+  {
+   "fieldname": "column_break_hours",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Worked hours (IN to OUT) needed for Present. Leave empty to treat any IN as Present.",
+   "fieldname": "minimum_hours_present",
+   "fieldtype": "Float",
+   "label": "Minimum Hours for Present",
+   "precision": "2"
+  },
+  {
+   "description": "Worked hours needed for Half Day when Present hours are not met. Leave empty to disable Half Day.",
+   "fieldname": "minimum_hours_half_day",
+   "fieldtype": "Float",
+   "label": "Minimum Hours for Half Day",
+   "precision": "2"
+  },
+  {
+   "default": "#1F5EFF",
+   "fieldname": "color",
+   "fieldtype": "Color",
+   "label": "Calendar Color"
+  },
+  {
+   "fieldname": "location_section",
+   "fieldtype": "Section Break",
+   "label": "Location"
+  },
+  {
+   "fieldname": "location",
+   "fieldtype": "Link",
+   "label": "Location",
+   "options": "Geofence Location"
+  },
+  {
+   "description": "Optional. Weekly offs or holidays on this list also appear on the employee calendar.",
+   "fieldname": "holiday_list",
+   "fieldtype": "Link",
+   "label": "Holiday List",
+   "options": "Holiday List"
+  }
+ ],
+ "links": [
+  {
+   "link_doctype": "Shift Assignment",
+   "link_fieldname": "shift_type"
+  }
+ ],
+ "modified": "2026-09-28 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "HRMS Custom",
+ "name": "Shift Type",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Admin",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "HR Executive",
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Employee"
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "shift_name",
+ "track_changes": 1
+}

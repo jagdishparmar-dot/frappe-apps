@@ -1,0 +1,157 @@
+.page-container[data-page-route="live-attendance"] {
+	padding: 0 var(--padding-xl, 24px);
+}
+
+.page-container[data-page-route="live-attendance"] .page-head .page-head-content {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.page-container[data-page-route="live-attendance"] .page-title,
+.page-container[data-page-route="live-attendance"] .page-form {
+	padding-left: 0;
+	padding-right: 0;
+}
+
+.live-attendance {
+	padding: var(--padding-md, 16px) 0 var(--padding-xl, 24px);
+}
+
+.live-attendance-meta {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	gap: 12px;
+	padding: 0 0 0.85rem;
+}
+
+.live-attendance-cards {
+	display: grid;
+	grid-template-columns: repeat(5, minmax(0, 1fr));
+	gap: 12px;
+	margin-bottom: 16px;
+}
+
+.live-attendance-card {
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius-md, 10px);
+	background: var(--fg-color);
+	padding: 14px 16px 16px;
+	box-shadow: var(--shadow-xs, 0 1px 2px rgba(15, 23, 42, 0.04));
+}
+
+.live-attendance-card .label {
+	font-size: 12px;
+	letter-spacing: 0.02em;
+	text-transform: uppercase;
+	color: var(--text-muted);
+}
+
+.live-attendance-card .value {
+	margin-top: 6px;
+	font-size: 28px;
+	line-height: 1.1;
+	font-weight: 650;
+	color: var(--text-color);
+}
+
+.live-attendance-card.present {
+	border-top: 3px solid var(--green-500, #16a34a);
+}
+
+.live-attendance-card.absent {
+	border-top: 3px solid var(--red-500, #dc2626);
+}
+
+.live-attendance-card.late {
+	border-top: 3px solid var(--orange-500, #ea580c);
+}
+
+.live-attendance-card.half-day {
+	border-top: 3px solid var(--blue-500, #0284c7);
+}
+
+.live-attendance-card.on-leave {
+	border-top: 3px solid var(--blue-500, #0284c7);
+}
+
+.live-attendance-wrap {
+	overflow: auto;
+	max-height: calc(100vh - 280px);
+	border: 1px solid var(--border-color);
+	border-radius: var(--border-radius-md, 8px);
+	background: var(--fg-color);
+}
+
+.live-attendance-table {
+	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
+}
+
+.live-attendance-table th,
+.live-attendance-table td {
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--border-color);
+	text-align: left;
+	vertical-align: middle;
+}
+
+.live-attendance-table thead th {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background: var(--subtle-fg, var(--fg-color));
+	font-size: 12px;
+	color: var(--text-muted);
+	font-weight: 600;
+}
+
+.live-attendance-badge {
+	display: inline-block;
+	padding: 2px 8px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.live-attendance-badge.late {
+	background: var(--orange-50, #fff7ed);
+	color: var(--orange-700, #c2410c);
+}
+
+.live-attendance-badge.present {
+	background: var(--green-50, #f0fdf4);
+	color: var(--green-700, #15803d);
+}
+
+.live-attendance-badge.half-day {
+	background: var(--blue-50, #f0f9ff);
+	color: var(--blue-700, #0369a1);
+}
+
+.live-attendance-badge.on-leave {
+	background: var(--blue-50, #f0f9ff);
+	color: var(--blue-700, #0369a1);
+}
+
+.live-attendance-badge.holiday {
+	background: var(--yellow-50, #fffbeb);
+	color: var(--yellow-800, #92400e);
+}
+
+.live-attendance-badge.absent {
+	background: var(--red-50, #fef2f2);
+	color: var(--red-700, #b91c1c);
+}
+
+.live-attendance-flag {
+	color: var(--orange-600, #ea580c);
+	font-size: 12px;
+}
+
+@media (max-width: 900px) {
+	.live-attendance-cards {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+}
