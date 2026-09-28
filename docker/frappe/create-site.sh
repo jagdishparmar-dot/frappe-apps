@@ -58,6 +58,93 @@ is_skipped() {
   return 1
 }
 
+# Site still lists an app that is no longer in the image (apps/ folder removed
+# without uninstall-app). bench uninstall-app / migrate both import the Python
+# package, so they fail with ModuleNotFoundError and Coolify never finishes.
+# Drop the name from apps.txt + MariaDB without importing the missing module.
+# DocType tables are left in place (safe leftover); they are not dropped.
+unregister_missing_apps() {
+  local site="$1"
+  [[ -d "sites/${site}" && -f "sites/${site}/site_config.json" ]] || return 0
+
+  echo "Checking ${site} for installed apps missing from this image..."
+  ./env/bin/python - "${site}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+site = sys.argv[1]
+bench = Path("/home/frappe/frappe-bench")
+available = {p.name for p in (bench / "apps").iterdir() if p.is_dir()}
+available.add("frappe")
+
+apps_txt = bench / "sites" / site / "apps.txt"
+site_cfg = json.loads((bench / "sites" / site / "site_config.json").read_text())
+common = json.loads((bench / "sites" / "common_site_config.json").read_text())
+
+installed = []
+if apps_txt.is_file():
+    installed = [line.strip() for line in apps_txt.read_text().splitlines() if line.strip()]
+
+import pymysql
+
+conn = pymysql.connect(
+    host=str(common.get("db_host") or "db"),
+    port=int(common.get("db_port") or 3306),
+    user=str(site_cfg.get("db_user") or site_cfg["db_name"]),
+    password=str(site_cfg["db_password"]),
+    database=str(site_cfg["db_name"]),
+    charset="utf8mb4",
+    autocommit=False,
+)
+cur = conn.cursor()
+cur.execute("SELECT defvalue FROM `tabDefaultValue` WHERE defkey=%s", ("installed_apps",))
+for (defvalue,) in cur.fetchall():
+    if not defvalue:
+        continue
+    try:
+        db_apps = json.loads(defvalue)
+    except (TypeError, json.JSONDecodeError):
+        continue
+    if isinstance(db_apps, list) and db_apps:
+        installed = db_apps
+        break
+
+missing = [app for app in installed if app and app not in available]
+if not missing:
+    print(f"  {site}: all installed apps are present in the image")
+    conn.close()
+    sys.exit(0)
+
+kept = [app for app in installed if app in available]
+print(f"  {site}: unregistering missing apps (tables kept): {', '.join(missing)}")
+
+cur.execute(
+    "UPDATE `tabDefaultValue` SET defvalue=%s WHERE defkey=%s",
+    (json.dumps(kept), "installed_apps"),
+)
+
+cur.execute("SHOW TABLES LIKE 'tabInstalled Application'")
+if cur.fetchone():
+    for app in missing:
+        cur.execute("DELETE FROM `tabInstalled Application` WHERE app_name=%s", (app,))
+
+conn.commit()
+conn.close()
+apps_txt.write_text("\n".join(kept) + ("\n" if kept else ""))
+
+try:
+    import redis
+
+    url = common.get("redis_cache")
+    if url:
+        redis.from_url(str(url)).flushdb()
+        print(f"  {site}: flushed redis-cache after unregister")
+except Exception as exc:
+    print(f"  {site}: warning — could not flush redis-cache: {exc}")
+PY
+}
+
 # Populate nameref array with resolved app names
 resolve_apps_into() {
   local -n _out="$1"
@@ -102,10 +189,10 @@ ensure_site() {
 
   if [[ -d "sites/${site}" ]]; then
     echo "Site ${site} already exists — ensuring apps: ${apps[*]:-none}"
+    unregister_missing_apps "${site}"
     for app in "${apps[@]+"${apps[@]}"}"; do
       echo "Ensuring app installed: ${app}"
       bench --site "${site}" install-app "${app}" || true
-	  bench uninstall-app hrms-portal
     done
     bench --site "${site}" migrate
   else
