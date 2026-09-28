@@ -33,6 +33,10 @@
   "other_employee_type",
   "attendance_section",
   "geofence_policy",
+  "notifications_section",
+  "notify_shift_start",
+  "notify_shift_end",
+  "notify_approvals",
   "onboarding_section",
   "onboarding_status",
   "column_break_onboarding",
@@ -242,6 +246,31 @@
   },
   {
    "collapsible": 1,
+   "fieldname": "notifications_section",
+   "fieldtype": "Section Break",
+   "label": "Mobile Notifications"
+  },
+  {
+   "default": "1",
+   "fieldname": "notify_shift_start",
+   "fieldtype": "Check",
+   "label": "Shift Start"
+  },
+  {
+   "default": "1",
+   "fieldname": "notify_shift_end",
+   "fieldtype": "Check",
+   "label": "Shift End"
+  },
+  {
+   "default": "1",
+   "description": "Leave, regularization, profile, and document reviews.",
+   "fieldname": "notify_approvals",
+   "fieldtype": "Check",
+   "label": "Approval Status"
+  },
+  {
+   "collapsible": 1,
    "collapsible_depends_on": "onboarding_status",
    "fieldname": "onboarding_section",
    "fieldtype": "Section Break",
@@ -420,9 +449,17 @@
   {
    "link_doctype": "Attendance Regularization",
    "link_fieldname": "employee"
+  },
+  {
+   "link_doctype": "Employee Device",
+   "link_fieldname": "employee"
+  },
+  {
+   "link_doctype": "Employee Notification",
+   "link_fieldname": "employee"
   }
  ],
- "modified": "2026-09-28 19:20:00.000000",
+ "modified": "2026-09-28 19:35:00.000000",
  "modified_by": "Administrator",
  "module": "HRMS Custom",
  "name": "Employee",

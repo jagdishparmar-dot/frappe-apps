@@ -6,7 +6,7 @@ from frappe.utils import escape_html, now_datetime
 from hrms_custom.api.onboarding import get_hr_recipients
 from hrms_custom.permissions import is_hr
 from hrms_custom.utils.leave import preview_application
-from hrms_custom.utils.notify import try_sendmail
+from hrms_custom.utils.notify import CHANNEL_APPROVAL, notify_employee, try_sendmail
 
 REVIEWED_STATUSES = ("Approved", "Rejected")
 
@@ -92,11 +92,26 @@ def notify_hr_of_application(doc) -> bool:
 def notify_employee_of_review(doc) -> bool:
 	user = frappe.db.get_value("Employee", doc.employee, "user_id")
 	email = frappe.db.get_value("User", user, "email") if user else None
+	title = f"Your leave application was {doc.status.lower()}"
+	body = (
+		f"Your {doc.leave_type} request ({doc.from_date} – {doc.to_date}) was {doc.status.lower()}."
+		+ (f" {doc.remarks}" if doc.remarks else "")
+	)
+	notify_employee(
+		doc.employee,
+		CHANNEL_APPROVAL,
+		title,
+		body,
+		route="/leave",
+		reference_doctype="Leave Application",
+		reference_name=doc.name,
+		occurrence_key=f"Leave Application:{doc.name}:{doc.status}",
+	)
 	if not email:
 		return False
 	return try_sendmail(
 		recipients=[email],
-		subject=f"Your leave application was {doc.status.lower()}",
+		subject=title,
 		message=(
 			f"Your {escape_html(doc.leave_type)} request ({doc.from_date} – {doc.to_date}) "
 			f"was {doc.status.lower()}."

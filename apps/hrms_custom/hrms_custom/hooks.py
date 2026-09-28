@@ -19,3 +19,12 @@ add_to_apps_screen = [
 before_install = "hrms_custom.setup.install.before_install"
 after_install = "hrms_custom.setup.install.after_install"
 after_migrate = "hrms_custom.setup.install.after_migrate"
+
+extend_bootinfo = ["hrms_custom.boot.extend_bootinfo"]
+app_include_js = ["/assets/hrms_custom/js/desk_admin_menus.js"]
+
+scheduler_events = {
+	"cron": {
+		"*/5 * * * *": ["hrms_custom.jobs.shift_reminders.send_shift_reminders"],
+	}
+}

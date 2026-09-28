@@ -55,6 +55,12 @@ at the top level of the JSON body, with a matching HTTP status code.
 | POST | `/api/method/hrms_custom.api.leave.cancel_leave` | token; own Open application |
 | POST | `/api/method/hrms_custom.api.leave.review_leave` | HR: `application`, `status` (Approved/Rejected), `remarks` |
 | GET | `/api/method/hrms_custom.api.leave.list_leave_applications?employee=&status=` | token (own), HR (any) |
+| GET | `/api/method/hrms_custom.api.notifications.get_notification_preferences` | token |
+| POST | `/api/method/hrms_custom.api.notifications.update_notification_preferences` | token; `notify_shift_start`, `notify_shift_end`, `notify_approvals` |
+| POST | `/api/method/hrms_custom.api.notifications.register_device` | token; `fcm_token`, optional `platform`, `device_id` |
+| POST | `/api/method/hrms_custom.api.notifications.unregister_device` | token; `fcm_token` |
+| GET | `/api/method/hrms_custom.api.notifications.list_my_notifications?unread_only=` | token |
+| POST | `/api/method/hrms_custom.api.notifications.mark_notifications_read` | token; `names` or `mark_all=1` |
 
 Desk **Script Reports** (HR roles, export from the report view): Attendance Summary, Employee
 Date-wise Attendance (background / prepared, one row per employee per day with IN/OUT and
@@ -79,6 +85,11 @@ Mobile clients send `Authorization: token <api_key>:<api_secret>`.
 
 Emails are best-effort. On a site with no outgoing Email Account the invite still succeeds, and
 the desk shows a warning.
+
+OS push uses Firebase Cloud Messaging. Until a service account is configured, employees still get
+an in-app inbox and can toggle channels on Profile. Set site_config `firebase_service_account` to
+the JSON object or a path to the file, then add `google-services.json` / `GoogleService-Info.plist`
+to the Flutter app.
 
 ## Tests
 

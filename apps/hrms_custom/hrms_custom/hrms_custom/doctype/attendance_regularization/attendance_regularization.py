@@ -5,7 +5,7 @@ from frappe.utils import escape_html, now_datetime
 
 from hrms_custom.api.onboarding import get_hr_recipients
 from hrms_custom.permissions import is_hr
-from hrms_custom.utils.notify import try_sendmail
+from hrms_custom.utils.notify import CHANNEL_APPROVAL, notify_employee, try_sendmail
 from hrms_custom.utils.regularization import REVIEWED_STATUSES, apply_regularization, validate_request
 
 
@@ -93,11 +93,25 @@ def notify_hr_of_regularization(doc) -> bool:
 def notify_employee_of_review(doc) -> bool:
 	user = frappe.db.get_value("Employee", doc.employee, "user_id")
 	email = frappe.db.get_value("User", user, "email") if user else None
+	title = f"Your attendance regularization was {doc.status.lower()}"
+	body = f"Your regularization for {doc.date} was {doc.status.lower()}." + (
+		f" {doc.remarks}" if doc.remarks else ""
+	)
+	notify_employee(
+		doc.employee,
+		CHANNEL_APPROVAL,
+		title,
+		body,
+		route="/attendance/regularization",
+		reference_doctype="Attendance Regularization",
+		reference_name=doc.name,
+		occurrence_key=f"Attendance Regularization:{doc.name}:{doc.status}",
+	)
 	if not email:
 		return False
 	return try_sendmail(
 		recipients=[email],
-		subject=f"Your attendance regularization was {doc.status.lower()}",
+		subject=title,
 		message=(
 			f"Your regularization for {doc.date} was {doc.status.lower()}."
 			+ (f"<br><br>{escape_html(doc.remarks)}" if doc.remarks else "")

@@ -8,7 +8,9 @@
   "geofence_policy",
   "auth_section",
   "otp_expiry_minutes",
-  "otp_max_attempts"
+  "otp_max_attempts",
+  "notifications_section",
+  "shift_reminder_minutes"
  ],
  "fields": [
   {
@@ -45,11 +47,25 @@
    "label": "Max Verification Attempts per OTP",
    "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "notifications_section",
+   "fieldtype": "Section Break",
+   "label": "Mobile Notifications"
+  },
+  {
+   "default": "15",
+   "description": "Minutes before shift start/end to notify the employee. Requires a Firebase service account in site_config (`firebase_service_account`) for OS push; the in-app inbox still works without it.",
+   "fieldname": "shift_reminder_minutes",
+   "fieldtype": "Int",
+   "label": "Shift Reminder (minutes)",
+   "non_negative": 1,
+   "reqd": 1
   }
  ],
  "issingle": 1,
  "links": [],
- "modified": "2026-09-26 12:00:00.000000",
+ "modified": "2026-09-28 19:35:00.000000",
  "modified_by": "Administrator",
  "module": "HRMS Custom",
  "name": "HRMS Custom Settings",

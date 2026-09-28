@@ -4,7 +4,7 @@ from frappe.model.document import Document
 from frappe.utils import escape_html, now_datetime
 
 from hrms_custom.permissions import is_hr
-from hrms_custom.utils.notify import try_sendmail
+from hrms_custom.utils.notify import CHANNEL_APPROVAL, notify_employee, try_sendmail
 
 DEFAULT_CATEGORY = {
 	"ID Proof": "Statutory",
@@ -49,10 +49,22 @@ class EmployeeDocument(Document):
 def notify_employee_of_review(doc) -> bool:
 	user = frappe.db.get_value("Employee", doc.employee, "user_id")
 	email = frappe.db.get_value("User", user, "email") if user else None
+
+	verb = "verified" if doc.status == "Verified" else "rejected"
+	title = f"Your {doc.document_type} was {verb}"
+	notify_employee(
+		doc.employee,
+		CHANNEL_APPROVAL,
+		title,
+		f"Your document {doc.file_name or doc.document_type} ({doc.document_type}) was {verb} by HR.",
+		route="/documents",
+		reference_doctype="Employee Document",
+		reference_name=doc.name,
+		occurrence_key=f"Employee Document:{doc.name}:{doc.status}",
+	)
 	if not email:
 		return False
 
-	verb = "verified" if doc.status == "Verified" else "rejected"
 	remarks = f"<p>Remarks: {escape_html(doc.remarks)}</p>" if doc.remarks else ""
 	action = (
 		"<p>Please upload a corrected copy from the Documents screen in the HRMS app.</p>"
@@ -61,7 +73,7 @@ def notify_employee_of_review(doc) -> bool:
 	)
 	return try_sendmail(
 		recipients=[email],
-		subject=f"Your {doc.document_type} was {verb}",
+		subject=title,
 		message=(
 			f"<p>Your document <b>{escape_html(doc.file_name or doc.document_type)}</b> "
 			f"({escape_html(doc.document_type)}) was {verb} by HR.</p>{remarks}{action}"

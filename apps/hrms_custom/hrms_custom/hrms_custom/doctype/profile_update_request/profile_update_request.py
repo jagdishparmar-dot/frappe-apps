@@ -10,7 +10,7 @@ from hrms_custom.utils.employee_fields import (
 	changes_summary,
 	FIELD_LABELS,
 )
-from hrms_custom.utils.notify import try_sendmail
+from hrms_custom.utils.notify import CHANNEL_APPROVAL, notify_employee, try_sendmail
 
 REVIEWED_STATUSES = ("Approved", "Rejected")
 
@@ -77,17 +77,29 @@ class ProfileUpdateRequest(Document):
 def notify_employee_of_review(doc) -> bool:
 	user = frappe.db.get_value("Employee", doc.employee, "user_id")
 	email = frappe.db.get_value("User", user, "email") if user else None
+
+	verb = "approved" if doc.status == "Approved" else "rejected"
+	title = f"Your profile update was {verb}"
+	notify_employee(
+		doc.employee,
+		CHANNEL_APPROVAL,
+		title,
+		f"HR {verb} your profile update request.",
+		route="/profile",
+		reference_doctype="Profile Update Request",
+		reference_name=doc.name,
+		occurrence_key=f"Profile Update Request:{doc.name}:{doc.status}",
+	)
 	if not email:
 		return False
 
-	verb = "approved" if doc.status == "Approved" else "rejected"
 	remarks = f"<p>Remarks: {escape_html(doc.remarks)}</p>" if doc.remarks else ""
 	items = "".join(
 		f"<li>{escape_html(FIELD_LABELS.get(field, field))}</li>" for field in (doc.changes or {})
 	)
 	return try_sendmail(
 		recipients=[email],
-		subject=f"Your profile update was {verb}",
+		subject=title,
 		message=(
 			f"<p>HR {verb} your profile update request.</p>"
 			f"<ul>{items}</ul>{remarks}"
