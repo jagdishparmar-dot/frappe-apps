@@ -105,6 +105,7 @@ ensure_site() {
     for app in "${apps[@]+"${apps[@]}"}"; do
       echo "Ensuring app installed: ${app}"
       bench --site "${site}" install-app "${app}" || true
+	  bench uninstall-app hrms-portal
     done
     bench --site "${site}" migrate
   else
