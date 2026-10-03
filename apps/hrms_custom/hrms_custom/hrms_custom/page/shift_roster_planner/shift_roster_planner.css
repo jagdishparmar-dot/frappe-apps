@@ -73,6 +73,10 @@
 	background: var(--yellow-50, #fff8e1);
 }
 
+.roster-planner-table td.week-off {
+	background: var(--blue-50, #e8f4fc);
+}
+
 .roster-planner-table select.roster-cell {
 	min-width: 80px;
 	padding: 2px 4px;

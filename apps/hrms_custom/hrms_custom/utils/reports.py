@@ -1,12 +1,27 @@
 """Shared filters and row builders for the V1 Desk reports."""
 
+import re
 from datetime import date, datetime, time, timedelta
 
 import frappe
 from frappe.utils import cint, flt, get_datetime, get_time, getdate
 
-from hrms_custom.utils.leave import allocated_days, company_holiday_dates, leave_type_dict, parse_year, used_days
-from hrms_custom.utils.shifts import assignment_on, load_shift_types, month_range, parse_month, shift_payload
+from hrms_custom.utils.leave import (
+	allocated_days,
+	employee_holiday_dates,
+	leave_type_dict,
+	parse_year,
+	used_days,
+)
+from hrms_custom.utils.regularization import format_time
+from hrms_custom.utils.shifts import (
+	assignment_on,
+	load_shift_types,
+	month_range,
+	parse_month,
+	roster_week_offs_between,
+	shift_payload,
+)
 
 
 def parse_day(value) -> date:
@@ -31,6 +46,35 @@ def parse_date_range(filters: dict | None) -> tuple[date, date]:
 	if (end - start).days > 366:
 		frappe.throw("Date range cannot exceed one year")
 	return start, end
+
+
+_REPORT_MONTH = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+
+_GRID_LABEL = {
+	"Present": "Present",
+	"Late": "Present",
+	"Absent": "Absent",
+	"On Leave": "Leave",
+	"Half Day": "Half Day",
+	"Holiday": "Holiday",
+	"Week Off": "Week Off",
+	"Pending": "Pending",
+	"Upcoming": "Upcoming",
+}
+_GRID_TOTAL = {
+	"Present": "present",
+	"Absent": "absent",
+	"Leave": "leave",
+	"Half Day": "half_day",
+}
+
+
+def report_month(filters: dict | None) -> date:
+	"""First day of a required `YYYY-MM` filter. An empty value is rejected."""
+	raw = str((filters or {}).get("month") or "").strip()
+	if not _REPORT_MONTH.fullmatch(raw):
+		frappe.throw("month must be YYYY-MM")
+	return parse_month(raw)
 
 
 def list_employees(filters: dict | None, *, status: str | None = None) -> list[dict]:
@@ -103,6 +147,10 @@ def shift_window(day: date, shift: dict) -> tuple[datetime, datetime, datetime]:
 
 
 def _load_shifts_for(employees: list[dict], start: date, end: date) -> dict[str, dict]:
+	# One extra day on each side lets a punch be given to the neighboring shift
+	# instead of being counted twice where search windows would otherwise overlap.
+	start = start - timedelta(days=1)
+	end = end + timedelta(days=1)
 	names = [row.name for row in employees]
 	assignments: dict[str, list] = {}
 	rosters: dict[str, dict] = {}
@@ -122,7 +170,7 @@ def _load_shifts_for(employees: list[dict], start: date, end: date) -> dict[str,
 			assignments.setdefault(row.employee, []).append(row)
 		for row in frappe.db.sql(
 			"""
-			select name, employee, date, shift_type, location
+			select name, employee, date, shift_type, location, is_week_off
 			from `tabShift Roster`
 			where employee in %(employees)s and date between %(start)s and %(end)s
 			""",
@@ -131,7 +179,10 @@ def _load_shifts_for(employees: list[dict], start: date, end: date) -> dict[str,
 		):
 			rosters.setdefault(row.employee, {})[getdate(row.date)] = row
 	types = load_shift_types(
-		[*(a.shift_type for rows in assignments.values() for a in rows), *(r.shift_type for days in rosters.values() for r in days.values())]
+		[
+			*(a.shift_type for rows in assignments.values() for a in rows),
+			*(r.shift_type for days in rosters.values() for r in days.values() if r.shift_type),
+		]
 	)
 	resolved: dict[str, dict] = {}
 	for emp in names:
@@ -141,7 +192,9 @@ def _load_shifts_for(employees: list[dict], start: date, end: date) -> dict[str,
 			roster = rosters.get(emp, {}).get(cursor)
 			assignment = assignment_on(assignments.get(emp, []), cursor)
 			shift = None
-			if roster and roster.shift_type in types:
+			if roster and cint(roster.get("is_week_off")):
+				pass
+			elif roster and roster.shift_type in types:
 				shift = shift_payload(types[roster.shift_type], assignment=assignment.name if assignment else None, roster=roster.name, location=roster.location)
 			elif assignment and assignment.shift_type in types:
 				shift = shift_payload(types[assignment.shift_type], assignment=assignment.name)
@@ -164,7 +217,7 @@ def _load_checkins(employees: list[str], start: date, end: date) -> dict[str, li
 			and time >= %(start)s and time < %(end)s
 		order by time
 		""",
-		{"employees": employees, "start": start, "end": end + timedelta(days=2)},
+		{"employees": employees, "start": start - timedelta(days=1), "end": end + timedelta(days=2)},
 		as_dict=True,
 	)
 	grouped: dict[str, list] = {}
@@ -173,32 +226,128 @@ def _load_checkins(employees: list[str], start: date, end: date) -> dict[str, li
 	return grouped
 
 
-def punch_search_window(day: date, shift: dict | None) -> tuple[datetime, datetime]:
-	"""IN/OUT search range for a shift date, including slack around overnight windows."""
-	if shift:
-		start, end, _ = shift_window(day, shift)
-		slack = timedelta(hours=4)
-		return start - slack, end + slack
-	start = datetime.combine(day, time.min)
-	return start, start + timedelta(days=1)
+# How far outside the scheduled start/end a punch can still belong to that shift.
+_PUNCH_SLACK = timedelta(hours=4)
+# When two shifts meet or overlap, keep a short margin so a slightly early IN stays
+# with the later shift and a slightly late OUT stays with the earlier one.
+_EDGE_MARGIN = timedelta(minutes=30)
 
 
-def _first_in(punches: list, day: date, shift: dict | None = None):
-	lo, hi = punch_search_window(day, shift)
+def _gap_split(earlier_end: datetime, later_start: datetime) -> datetime:
+	"""Midpoint of the open gap. The earlier shift keeps OUTs through this instant."""
+	seconds = int((later_start - earlier_end).total_seconds())
+	return earlier_end + timedelta(seconds=seconds // 2)
+
+
+def _adjacent_shifts(by_day: dict | None, day: date) -> tuple[dict | None, dict | None]:
+	if not by_day:
+		return None, None
+	return by_day.get(day - timedelta(days=1)), by_day.get(day + timedelta(days=1))
+
+
+def log_search_window(
+	day: date,
+	shift: dict | None,
+	log_type: str,
+	prev_shift: dict | None = None,
+	next_shift: dict | None = None,
+) -> tuple[datetime, datetime]:
+	"""Inclusive search range for one log type on a shift date.
+
+	A lone shift accepts punches from 4 hours before start until 4 hours after end.
+	When the next or previous shift's range would overlap, the shared gap is split:
+	an IN after the previous shift ended belongs to the later shift, and an OUT up
+	to the midpoint of the gap stays with the earlier shift. Back-to-back shifts
+	(the next start is at or before this end) use a 30-minute margin instead of a
+	midpoint so a few minutes' early arrival and late exit are not swapped.
+	A calendar day with no shift does not claim the previous shift's 4-hour tail.
+	"""
+	log_type = (log_type or "IN").upper()
+	if not shift:
+		lo = datetime.combine(day, time.min)
+		hi = lo + timedelta(days=1)
+		if prev_shift:
+			_, prev_end, _ = shift_window(day - timedelta(days=1), prev_shift)
+			lo = max(lo, prev_end + _PUNCH_SLACK + timedelta(seconds=1))
+		return lo, hi
+
+	start, end, _ = shift_window(day, shift)
+	lo = start - _PUNCH_SLACK
+	hi = end + _PUNCH_SLACK
+
+	if prev_shift:
+		_, prev_end, _ = shift_window(day - timedelta(days=1), prev_shift)
+		if start > prev_end:
+			split = _gap_split(prev_end, start)
+			if log_type == "IN":
+				lo = max(lo, prev_end + timedelta(seconds=1))
+			else:
+				lo = max(lo, split + timedelta(seconds=1))
+		elif log_type == "IN":
+			lo = max(lo, start - _EDGE_MARGIN)
+		else:
+			lo = max(lo, prev_end + _EDGE_MARGIN + timedelta(seconds=1))
+
+	if next_shift:
+		next_start, _, _ = shift_window(day + timedelta(days=1), next_shift)
+		if next_start > end:
+			split = _gap_split(end, next_start)
+			if log_type == "IN":
+				next_in_lo = max(next_start - _PUNCH_SLACK, end + timedelta(seconds=1))
+				hi = min(hi, next_in_lo - timedelta(seconds=1))
+			else:
+				hi = min(hi, split)
+		elif log_type == "IN":
+			hi = min(hi, next_start - _EDGE_MARGIN - timedelta(seconds=1))
+		else:
+			hi = min(hi, end + _EDGE_MARGIN)
+
+	return lo, hi
+
+
+def punch_search_window(
+	day: date,
+	shift: dict | None,
+	prev_shift: dict | None = None,
+	next_shift: dict | None = None,
+) -> tuple[datetime, datetime]:
+	"""Bounding range covering both the IN and OUT search windows."""
+	in_lo, in_hi = log_search_window(day, shift, "IN", prev_shift, next_shift)
+	out_lo, out_hi = log_search_window(day, shift, "OUT", prev_shift, next_shift)
+	return min(in_lo, out_lo), max(in_hi, out_hi)
+
+
+def _first_in(punches: list, day: date, shift: dict | None = None, prev_shift: dict | None = None, next_shift: dict | None = None):
+	lo, hi = log_search_window(day, shift, "IN", prev_shift, next_shift)
+	if hi < lo:
+		return None
 	ins = [p for p in punches if p.log_type == "IN" and lo <= get_datetime(p.time) <= hi]
 	return min(ins, key=lambda p: get_datetime(p.time)) if ins else None
 
 
-def _last_out(punches: list, day: date, shift: dict | None = None, after=None):
-	lo, hi = punch_search_window(day, shift)
+def _last_out(
+	punches: list,
+	day: date,
+	shift: dict | None = None,
+	after=None,
+	prev_shift: dict | None = None,
+	next_shift: dict | None = None,
+):
+	lo, hi = log_search_window(day, shift, "OUT", prev_shift, next_shift)
+	if hi < lo:
+		return None
 	opened = get_datetime(after.time) if after else lo
 	outs = [p for p in punches if p.log_type == "OUT" and opened <= get_datetime(p.time) <= hi]
 	return max(outs, key=lambda p: get_datetime(p.time)) if outs else None
 
 
-def _pair_punches(punches: list, day: date, shift: dict | None = None):
-	first = _first_in(punches, day, shift)
-	return first, _last_out(punches, day, shift, after=first)
+def _pair_punches(punches: list, day: date, shift: dict | None = None, by_day: dict | None = None):
+	"""Earliest IN and the latest OUT after it. An OUT with no IN is not a worked day."""
+	prev_shift, next_shift = _adjacent_shifts(by_day, day)
+	first = _first_in(punches, day, shift, prev_shift, next_shift)
+	if not first:
+		return None, None
+	return first, _last_out(punches, day, shift, first, prev_shift, next_shift)
 
 
 def _approved_leave_days(employees: list[str], start: date, end: date, company_holidays: dict[str, set[date]]) -> dict[str, set[date]]:
@@ -246,13 +395,11 @@ def attendance_summary_rows(filters: dict | None) -> list[dict]:
 	employees = list_employees(filters, status="Active")
 	shifts = _load_shifts_for(employees, start, end)
 	checkins = _load_checkins([row.name for row in employees], start, end)
-	holiday_by_company: dict[str, set[date]] = {}
-	holiday_by_employee: dict[str, set[date]] = {}
-	for emp in employees:
-		if emp.company not in holiday_by_company:
-			holiday_by_company[emp.company] = company_holiday_dates(emp.company, start, end)
-		holiday_by_employee[emp.name] = holiday_by_company.get(emp.company) or set()
+	holiday_by_employee: dict[str, set[date]] = {
+		emp.name: employee_holiday_dates(emp.name, emp.company, start, end) for emp in employees
+	}
 	leave_days = _approved_leave_days([row.name for row in employees], start, end, holiday_by_employee)
+	week_offs = roster_week_offs_between([row.name for row in employees], start, end)
 	today = getdate()
 
 	rows = []
@@ -265,10 +412,19 @@ def attendance_summary_rows(filters: dict | None) -> list[dict]:
 				continue
 			holiday = cursor in holiday_by_employee[emp.name]
 			on_leave_today = cursor in leave_days.get(emp.name, set())
+			week_off_today = cursor in week_offs.get(emp.name, set())
 			shift = shifts.get(emp.name, {}).get(cursor)
-			first, last = _pair_punches(checkins.get(emp.name, []), cursor, shift)
+			first, last = _pair_punches(checkins.get(emp.name, []), cursor, shift, shifts.get(emp.name))
 			status, is_late = _day_attendance_status(
-				first, last, shift, holiday, on_leave_today, cursor, today, calendar=False
+				first,
+				last,
+				shift,
+				holiday,
+				on_leave_today,
+				cursor,
+				today,
+				calendar=False,
+				week_off=week_off_today,
 			)
 			if status in ("Present", "Late"):
 				present += 1
@@ -304,26 +460,34 @@ def live_attendance(filters: dict | None) -> dict:
 	employees = list_employees(filters, status="Active")
 	shifts = _load_shifts_for(employees, day, day)
 	checkins = _load_checkins([row.name for row in employees], day, day)
-	holiday_by_company: dict[str, set[date]] = {}
-	holiday_by_employee: dict[str, set[date]] = {}
-	for emp in employees:
-		if emp.company not in holiday_by_company:
-			holiday_by_company[emp.company] = company_holiday_dates(emp.company, day, day)
-		holiday_by_employee[emp.name] = holiday_by_company.get(emp.company) or set()
+	holiday_by_employee: dict[str, set[date]] = {
+		emp.name: employee_holiday_dates(emp.name, emp.company, day, day) for emp in employees
+	}
 	leave_days = _approved_leave_days([row.name for row in employees], day, day, holiday_by_employee)
+	week_offs = roster_week_offs_between([row.name for row in employees], day, day)
+	regularizations = _approved_regularizations([row.name for row in employees], day, day)
 
-	counts = {"present": 0, "absent": 0, "late": 0, "half_day": 0, "on_leave": 0}
+	counts = {"present": 0, "absent": 0, "late": 0, "half_day": 0, "on_leave": 0, "week_off": 0}
 	rows = []
 	for emp in employees:
 		if not _employed_on(emp, day):
 			continue
 		holiday = day in holiday_by_employee[emp.name]
 		on_leave_today = day in leave_days.get(emp.name, set())
+		week_off_today = day in week_offs.get(emp.name, set())
 		shift = shifts.get(emp.name, {}).get(day)
 		punches = checkins.get(emp.name, [])
-		first, last = _pair_punches(punches, day, shift)
+		first, last = _pair_punches(punches, day, shift, shifts.get(emp.name))
 		status, late = _day_attendance_status(
-			first, last, shift, holiday, on_leave_today, day, day, calendar=False
+			first,
+			last,
+			shift,
+			holiday,
+			on_leave_today,
+			day,
+			day,
+			calendar=False,
+			week_off=week_off_today,
 		)
 		if status in ("Present", "Late"):
 			counts["present"] += 1
@@ -335,6 +499,8 @@ def live_attendance(filters: dict | None) -> dict:
 			counts["late"] += 1
 		if on_leave_today:
 			counts["on_leave"] += 1
+		if status == "Week Off":
+			counts["week_off"] += 1
 		rows.append(
 			{
 				"employee": emp.name,
@@ -346,12 +512,14 @@ def live_attendance(filters: dict | None) -> dict:
 				"out_time": str(get_datetime(last.time)) if last else None,
 				"shift_type": shift["name"] if shift else None,
 				"is_holiday": int(holiday),
+				"is_week_off": int(week_off_today),
 				"on_leave": int(on_leave_today),
 				"is_late": int(late),
 				"is_within_geofence": int(first.is_within_geofence) if first and first.is_within_geofence is not None else None,
+				**regularization_times(regularizations.get((emp.name, day))),
 			}
 		)
-	order = {"Late": 0, "Present": 1, "Half Day": 2, "On Leave": 3, "Holiday": 4, "Absent": 5}
+	order = {"Late": 0, "Present": 1, "Half Day": 2, "On Leave": 3, "Week Off": 4, "Holiday": 5, "Absent": 6}
 	rows.sort(key=lambda row: (order.get(row["status"], 9), (row["employee_name"] or row["employee"]).lower()))
 	return {
 		"date": day.isoformat(),
@@ -360,6 +528,47 @@ def live_attendance(filters: dict | None) -> dict:
 		"counts": counts,
 		"headcount": len(rows),
 		"employees": rows,
+	}
+
+
+def _approved_regularizations(employees: list[str], start: date, end: date) -> dict[tuple[str, date], dict]:
+	if not employees:
+		return {}
+	rows = frappe.get_all(
+		"Attendance Regularization",
+		filters={
+			"employee": ["in", employees],
+			"date": ["between", [start, end]],
+			"status": "Approved",
+		},
+		fields=[
+			"employee",
+			"date",
+			"requested_check_in",
+			"requested_check_out",
+			"actual_check_in",
+			"actual_check_out",
+		],
+	)
+	return {(row.employee, getdate(row.date)): row for row in rows}
+
+
+def regularization_times(reg) -> dict:
+	"""Tag plus the original punch and the approved times. Blank when the day was not regularized."""
+	if not reg:
+		return {
+			"regularized": "",
+			"actual_in_time": None,
+			"actual_out_time": None,
+			"regularized_in_time": None,
+			"regularized_out_time": None,
+		}
+	return {
+		"regularized": "Regularized",
+		"actual_in_time": format_time(reg.actual_check_in),
+		"actual_out_time": format_time(reg.actual_check_out),
+		"regularized_in_time": format_time(reg.requested_check_in),
+		"regularized_out_time": format_time(reg.requested_check_out),
 	}
 
 
@@ -406,7 +615,16 @@ def _status_from_hours(worked_minutes: int | None, shift: dict | None, late: boo
 
 
 def _day_attendance_status(
-	first, last, shift, holiday: bool, on_leave: bool, day, today, *, calendar=True
+	first,
+	last,
+	shift,
+	holiday: bool,
+	on_leave: bool,
+	day,
+	today,
+	*,
+	calendar=True,
+	week_off: bool = False,
 ) -> tuple[str, bool]:
 	late = False
 	if first and shift:
@@ -416,6 +634,8 @@ def _day_attendance_status(
 		return _status_from_hours(_worked_minutes(first, last), shift, late), late
 	if on_leave:
 		return "On Leave", False
+	if week_off:
+		return "Week Off", False
 	if holiday:
 		return "Holiday", False
 	if calendar:
@@ -437,13 +657,12 @@ def employee_date_attendance_rows(filters: dict | None) -> list[dict]:
 	employees = list_employees(filters, status="Active")
 	shifts = _load_shifts_for(employees, start, end)
 	checkins = _load_checkins([row.name for row in employees], start, end)
-	holiday_by_company: dict[str, set[date]] = {}
-	holiday_by_employee: dict[str, set[date]] = {}
-	for emp in employees:
-		if emp.company not in holiday_by_company:
-			holiday_by_company[emp.company] = company_holiday_dates(emp.company, start, end)
-		holiday_by_employee[emp.name] = holiday_by_company.get(emp.company) or set()
+	holiday_by_employee: dict[str, set[date]] = {
+		emp.name: employee_holiday_dates(emp.name, emp.company, start, end) for emp in employees
+	}
 	leave_days = _approved_leave_days([row.name for row in employees], start, end, holiday_by_employee)
+	week_offs = roster_week_offs_between([row.name for row in employees], start, end)
+	regularizations = _approved_regularizations([row.name for row in employees], start, end)
 
 	rows = []
 	for emp in employees:
@@ -454,10 +673,13 @@ def employee_date_attendance_rows(filters: dict | None) -> list[dict]:
 				continue
 			holiday = cursor in holiday_by_employee[emp.name]
 			on_leave_today = cursor in leave_days.get(emp.name, set())
+			week_off_today = cursor in week_offs.get(emp.name, set())
 			shift = shifts.get(emp.name, {}).get(cursor)
 			punches = checkins.get(emp.name, [])
-			first, last = _pair_punches(punches, cursor, shift)
-			status, late = _day_attendance_status(first, last, shift, holiday, on_leave_today, cursor, today)
+			first, last = _pair_punches(punches, cursor, shift, shifts.get(emp.name))
+			status, late = _day_attendance_status(
+				first, last, shift, holiday, on_leave_today, cursor, today, week_off=week_off_today
+			)
 			worked = _worked_minutes(first, last)
 			rows.append(
 				{
@@ -475,11 +697,82 @@ def employee_date_attendance_rows(filters: dict | None) -> list[dict]:
 					"worked_minutes": worked,
 					"shift_type": shift["name"] if shift else None,
 					"is_holiday": int(holiday),
+					"is_week_off": int(week_off_today),
 					"on_leave": int(on_leave_today),
 					"is_late": int(late),
+					**regularization_times(regularizations.get((emp.name, cursor))),
 				}
 			)
 			cursor += timedelta(days=1)
+	return rows
+
+
+def _employed_during(employee: dict, start: date, end: date) -> bool:
+	joined = getdate(employee.date_of_joining) if employee.date_of_joining else None
+	left = getdate(employee.relieving_date) if employee.relieving_date else None
+	if joined and joined > end:
+		return False
+	if left and left < start:
+		return False
+	return True
+
+
+def monthly_attendance_grid_rows(filters: dict | None) -> list[dict]:
+	"""One row per employee for a calendar month, with a status label in each day column.
+
+	Late is shown as Present. On Leave is shown as Leave. Days outside employment are blank
+	and are not counted. Holiday, Pending, and Upcoming are shown and are not counted.
+	"""
+	start, end = month_range(report_month(filters))
+	today = getdate()
+	employees = [emp for emp in list_employees(filters) if _employed_during(emp, start, end)]
+	shifts = _load_shifts_for(employees, start, end)
+	checkins = _load_checkins([row.name for row in employees], start, end)
+	holiday_by_employee: dict[str, set[date]] = {
+		emp.name: employee_holiday_dates(emp.name, emp.company, start, end) for emp in employees
+	}
+	leave_days = _approved_leave_days([row.name for row in employees], start, end, holiday_by_employee)
+	week_offs = roster_week_offs_between([row.name for row in employees], start, end)
+	regularizations = _approved_regularizations([row.name for row in employees], start, end)
+
+	rows = []
+	for emp in employees:
+		row = {
+			"employee": emp.name,
+			"employee_name": emp.employee_name,
+			"company": emp.company,
+			"department": emp.department,
+			"designation": emp.designation,
+			"branch": emp.branch,
+			"present": 0,
+			"absent": 0,
+			"leave": 0,
+			"half_day": 0,
+		}
+		cursor = start
+		while cursor <= end:
+			key = f"day_{cursor.day}"
+			if not _employed_on(emp, cursor):
+				row[key] = ""
+			else:
+				holiday = cursor in holiday_by_employee[emp.name]
+				on_leave_today = cursor in leave_days.get(emp.name, set())
+				week_off_today = cursor in week_offs.get(emp.name, set())
+				shift = shifts.get(emp.name, {}).get(cursor)
+				punches = checkins.get(emp.name, [])
+				first, last = _pair_punches(punches, cursor, shift, shifts.get(emp.name))
+				status, _late = _day_attendance_status(
+					first, last, shift, holiday, on_leave_today, cursor, today, week_off=week_off_today
+				)
+				label = _GRID_LABEL.get(status, status)
+				if regularizations.get((emp.name, cursor)):
+					label = f"{label} · Regularized" if label else "Regularized"
+				row[key] = label
+				total = _GRID_TOTAL.get(label)
+				if total:
+					row[total] += 1
+			cursor += timedelta(days=1)
+		rows.append(row)
 	return rows
 
 
@@ -493,10 +786,12 @@ def employee_month_attendance(employee: str, month: str | None = None) -> dict:
 	emp = employees[0]
 	shifts = _load_shifts_for(employees, start, end)
 	checkins = _load_checkins([emp.name], start, end)
-	holidays = company_holiday_dates(emp.company, start, end)
+	holidays = employee_holiday_dates(emp.name, emp.company, start, end)
 	leave_days = _approved_leave_days([emp.name], start, end, {emp.name: holidays})
+	week_offs = roster_week_offs_between([emp.name], start, end)
+	regularizations = _approved_regularizations([emp.name], start, end)
 
-	counts = {"present": 0, "absent": 0, "late": 0, "half_day": 0, "on_leave": 0, "holiday": 0}
+	counts = {"present": 0, "absent": 0, "late": 0, "half_day": 0, "on_leave": 0, "holiday": 0, "week_off": 0}
 	days = {}
 	cursor = start
 	while cursor <= end:
@@ -505,10 +800,13 @@ def employee_month_attendance(employee: str, month: str | None = None) -> dict:
 			continue
 		holiday = cursor in holidays
 		on_leave_today = cursor in leave_days.get(emp.name, set())
+		week_off_today = cursor in week_offs.get(emp.name, set())
 		shift = shifts.get(emp.name, {}).get(cursor)
 		punches = checkins.get(emp.name, [])
-		first, last = _pair_punches(punches, cursor, shift)
-		status, late = _day_attendance_status(first, last, shift, holiday, on_leave_today, cursor, today)
+		first, last = _pair_punches(punches, cursor, shift, shifts.get(emp.name))
+		status, late = _day_attendance_status(
+			first, last, shift, holiday, on_leave_today, cursor, today, week_off=week_off_today
+		)
 		if cursor <= today:
 			if status in ("Present", "Late"):
 				counts["present"] += 1
@@ -522,6 +820,8 @@ def employee_month_attendance(employee: str, month: str | None = None) -> dict:
 				counts["on_leave"] += 1
 			if holiday:
 				counts["holiday"] += 1
+		if status == "Week Off":
+			counts["week_off"] += 1
 		worked = _worked_minutes(first, last)
 		days[cursor.isoformat()] = {
 			"date": cursor.isoformat(),
@@ -532,8 +832,10 @@ def employee_month_attendance(employee: str, month: str | None = None) -> dict:
 			"worked_hours": _worked_label(worked),
 			"shift_type": shift["name"] if shift else None,
 			"is_holiday": int(holiday),
+			"is_week_off": int(week_off_today),
 			"on_leave": int(on_leave_today),
 			"is_late": int(late),
+			**regularization_times(regularizations.get((emp.name, cursor))),
 		}
 		cursor += timedelta(days=1)
 	return {
@@ -561,7 +863,8 @@ def punch_log_rows(filters: dict | None) -> list[dict]:
 	rows = frappe.db.sql(
 		f"""
 		select name, employee, employee_name, log_type, time, latitude, longitude,
-			is_within_geofence, geofence_location, distance_from_geofence, is_auto_closed, device_id
+			is_within_geofence, geofence_location, distance_from_geofence, is_auto_closed, device_id,
+			attendance_regularization
 		from `tabEmployee Checkin`
 		where {" and ".join(conditions)}
 		order by time desc
@@ -569,6 +872,8 @@ def punch_log_rows(filters: dict | None) -> list[dict]:
 		values,
 		as_dict=True,
 	)
+	for row in rows:
+		row["regularized"] = "Regularized" if row.attendance_regularization else ""
 	return rows
 
 
@@ -620,6 +925,7 @@ def late_early_rows(filters: dict | None) -> list[dict]:
 	employees = list_employees(filters, status="Active")
 	shifts = _load_shifts_for(employees, start, end)
 	checkins = _load_checkins([row.name for row in employees], start, end)
+	regularizations = _approved_regularizations([row.name for row in employees], start, end)
 	rows = []
 	for emp in employees:
 		cursor = start
@@ -632,7 +938,7 @@ def late_early_rows(filters: dict | None) -> list[dict]:
 				cursor += timedelta(days=1)
 				continue
 			_, shift_end, late_after = shift_window(cursor, shift)
-			first, last = _pair_punches(checkins.get(emp.name, []), cursor, shift)
+			first, last = _pair_punches(checkins.get(emp.name, []), cursor, shift, shifts.get(emp.name))
 			late_minutes = 0
 			early_minutes = 0
 			early_after = shift_end - timedelta(minutes=int(shift.get("early_exit_grace_minutes") or 0))
@@ -652,6 +958,7 @@ def late_early_rows(filters: dict | None) -> list[dict]:
 						"out_time": get_datetime(last.time) if last else None,
 						"late_minutes": late_minutes,
 						"early_minutes": early_minutes,
+						**regularization_times(regularizations.get((emp.name, cursor))),
 					}
 				)
 			cursor += timedelta(days=1)

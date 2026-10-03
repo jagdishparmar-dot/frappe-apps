@@ -27,6 +27,9 @@ class TestEmployeeType(IntegrationTestCase):
 
 	def setUp(self):
 		frappe.set_user("Administrator")
+		# This class edits job fields. Put the shared fixture back to Draft if it was submitted.
+		if frappe.db.get_value("Employee", self.employee, "docstatus") != 0:
+			frappe.db.set_value("Employee", self.employee, "docstatus", 0)
 		frappe.db.set_value("Employee", self.employee, "employee_type", "Permanent")
 		frappe.db.set_value("Employee", self.employee, "vendor", None)
 		frappe.db.set_value("Employee", self.employee, "other_employee_type", None)

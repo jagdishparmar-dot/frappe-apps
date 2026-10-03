@@ -189,3 +189,40 @@ class TestShiftApi(IntegrationTestCase):
 		frappe.set_user("Administrator")
 		frappe.delete_doc("Employee", joiner.name, force=True, ignore_permissions=True)
 		frappe.db.commit()
+
+	def test_default_shift_types_seed_once(self):
+		from hrms_custom.setup.install import DEFAULT_SHIFT_TYPES, seed_shift_types
+
+		frappe.set_user("Administrator")
+		for row in DEFAULT_SHIFT_TYPES:
+			name = row["shift_name"]
+			if frappe.db.exists("Shift Assignment", {"shift_type": name}) or frappe.db.exists(
+				"Shift Roster", {"shift_type": name}
+			):
+				continue
+			if frappe.db.exists("Shift Type", name):
+				frappe.delete_doc("Shift Type", name, force=True, ignore_permissions=True)
+		frappe.db.commit()
+
+		seed_shift_types()
+		general = frappe.get_doc("Shift Type", "General")
+		self.assertEqual(general.is_overnight, 0)
+		self.assertEqual(general.working_hours, 8.5)
+		self.assertEqual(general.grace_minutes, 15)
+		self.assertEqual(general.minimum_hours_present, 4.5)
+		self.assertEqual(general.minimum_hours_half_day, 4)
+		overnight = frappe.get_doc("Shift Type", "Overnight")
+		self.assertEqual(int(overnight.is_overnight), 1)
+		self.assertEqual(overnight.working_hours, 8)
+		twelve_night = frappe.get_doc("Shift Type", "12 Hour Night")
+		self.assertEqual(int(twelve_night.is_overnight), 1)
+		self.assertEqual(twelve_night.working_hours, 12)
+		standard = frappe.get_doc("Shift Type", "Standard Day")
+		self.assertEqual(int(standard.is_overnight), 0)
+		self.assertEqual(standard.working_hours, 9)
+		for row in DEFAULT_SHIFT_TYPES:
+			self.assertTrue(frappe.db.exists("Shift Type", row["shift_name"]))
+
+		seed_shift_types()
+		for row in DEFAULT_SHIFT_TYPES:
+			self.assertEqual(frappe.db.count("Shift Type", {"shift_name": row["shift_name"]}), 1)

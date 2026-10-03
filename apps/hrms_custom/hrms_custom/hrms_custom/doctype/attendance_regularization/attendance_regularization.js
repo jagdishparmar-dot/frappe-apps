@@ -1,5 +1,13 @@
 frappe.ui.form.on("Attendance Regularization", {
+	date(frm) {
+		if (!frm.doc.date || is_hr_user()) return;
+		if (frm.doc.date === frappe.datetime.get_today()) {
+			frappe.msgprint(__("You cannot regularize attendance for today"));
+			frm.set_value("date", null);
+		}
+	},
 	refresh(frm) {
+		set_own_employee(frm);
 		if (frm.is_new() || !frappe.user.has_role(["System Manager", "HR Admin", "HR Executive"])) return;
 		if (frm.doc.status !== "Open") return;
 
@@ -14,6 +22,15 @@ frappe.ui.form.on("Attendance Regularization", {
 		});
 	},
 });
+
+function is_hr_user() {
+	return frappe.user.has_role(["System Manager", "HR Admin", "HR Executive"]);
+}
+
+function set_own_employee(frm) {
+	if (!frm.is_new() || frm.doc.employee || frappe.user.has_role(["System Manager", "HR Admin", "HR Executive"])) return;
+	if (frappe.boot.hrms_session_employee) frm.set_value("employee", frappe.boot.hrms_session_employee);
+}
 
 function review(frm, status, remarks) {
 	frappe.call({

@@ -7,8 +7,11 @@ from hrms_custom.hrms_custom.report.employee_date_wise_attendance.employee_date_
 	execute as date_wise_attendance,
 )
 from hrms_custom.hrms_custom.report.employee_master.employee_master import execute as employee_master
-from hrms_custom.hrms_custom.report.late_coming_early_going.late_coming_early_going import execute as late_early
+from hrms_custom.hrms_custom.report.late_coming_and_early_going.late_coming_and_early_going import execute as late_early
 from hrms_custom.hrms_custom.report.leave_balance.leave_balance import execute as leave_balance
+from hrms_custom.hrms_custom.report.monthly_attendance_grid.monthly_attendance_grid import (
+	execute as monthly_grid,
+)
 from hrms_custom.hrms_custom.report.onboarding_status.onboarding_status import execute as onboarding_status
 from hrms_custom.hrms_custom.report.punch_log.punch_log import execute as punch_log
 from hrms_custom.tests.utils import get_test_company, make_employee_user
@@ -257,6 +260,129 @@ class TestReports(IntegrationTestCase):
 		_, rows = onboarding_status({"company": self.company, "onboarding_status": "Invited"})
 		self.assertTrue(any(r["employee"] == joiner and r["onboarding_status"] == "Invited" for r in rows))
 
+	def test_monthly_attendance_grid(self):
+		self.assertRaises(frappe.ValidationError, monthly_grid, {})
+		self.assertRaises(frappe.ValidationError, monthly_grid, {"month": ""})
+		self.assertRaises(frappe.ValidationError, monthly_grid, {"month": "2026-3"})
+		self.assertRaises(frappe.ValidationError, monthly_grid, {"month": "2026-13"})
+		self.assertRaises(frappe.ValidationError, monthly_grid, {"month": "2026-03", "company": "No Such Co"})
+
+		feb_columns, _feb_rows = monthly_grid({"month": "2026-02", "employee": self.employee})
+		feb_days = [col for col in feb_columns if col["fieldname"].startswith("day_")]
+		self.assertEqual([col["label"] for col in feb_days], [str(day) for day in range(1, 29)])
+
+		shift = frappe.get_doc("Shift Type", "Reports Day")
+		shift.minimum_hours_present = 8
+		shift.minimum_hours_half_day = 4
+		shift.save(ignore_permissions=True)
+		self._punch("2026-03-02 09:05:00")
+		self._punch("2026-03-02 18:00:00", "OUT")
+		self._punch("2026-03-03 09:40:00")
+		self._punch("2026-03-03 18:00:00", "OUT")
+		self._punch("2026-03-05 09:05:00")
+		self._punch("2026-03-05 14:00:00", "OUT")
+		if not frappe.db.exists("Leave Type", "Reports Casual"):
+			frappe.get_doc(
+				{"doctype": "Leave Type", "leave_type_name": "Reports Casual", "company": self.company}
+			).insert(ignore_permissions=True)
+		frappe.get_doc(
+			{
+				"doctype": "Leave Allocation",
+				"employee": self.employee,
+				"leave_type": "Reports Casual",
+				"from_date": "2026-01-01",
+				"to_date": "2026-12-31",
+				"allocated": 5,
+			}
+		).insert(ignore_permissions=True)
+		frappe.get_doc(
+			{
+				"doctype": "Leave Application",
+				"employee": self.employee,
+				"leave_type": "Reports Casual",
+				"from_date": "2026-03-04",
+				"to_date": "2026-03-04",
+				"status": "Approved",
+				"reason": "Personal",
+				"remarks": "Covered",
+			}
+		).insert(ignore_permissions=True)
+
+		created = []
+		try:
+			for first_name, joining, relieving, status in (
+				("Grid Joiner", "2026-03-20", None, "Inactive"),
+				("Grid Leaver", "2026-01-01", "2026-03-10", "Left"),
+				("Grid Future", "2026-04-01", None, "Active"),
+			):
+				created.append(
+					frappe.get_doc(
+						{
+							"doctype": "Employee",
+							"first_name": first_name,
+							"date_of_birth": "1990-01-15",
+							"date_of_joining": joining,
+							"relieving_date": relieving,
+							"company": self.company,
+							"department": self.department,
+							"status": status,
+						}
+					)
+					.insert(ignore_permissions=True)
+					.name
+				)
+			frappe.db.commit()
+
+			columns, rows = monthly_grid({"month": "2026-03", "company": self.company})
+			day_columns = [col for col in columns if col["fieldname"].startswith("day_")]
+			self.assertEqual(len(day_columns), 31)
+			self.assertEqual(day_columns[0]["label"], "1")
+			self.assertEqual(day_columns[-1]["fieldname"], "day_31")
+			self.assertEqual(
+				[col["fieldname"] for col in columns[:6]],
+				["employee", "employee_name", "company", "department", "designation", "branch"],
+			)
+			self.assertEqual(
+				[col["fieldname"] for col in columns[-4:]],
+				["present", "absent", "leave", "half_day"],
+			)
+
+			row = self._row(rows, employee=self.employee)
+			self.assertEqual(row["day_2"], "Present")
+			self.assertEqual(row["day_3"], "Present")
+			self.assertEqual(row["day_4"], "Leave")
+			self.assertEqual(row["day_5"], "Half Day")
+			self.assertEqual(row["day_6"], "Absent")
+			self.assertEqual(row["day_8"], "Holiday")
+			self.assertEqual(row["present"], 2)
+			self.assertEqual(row["leave"], 1)
+			self.assertEqual(row["half_day"], 1)
+			self.assertEqual(row["absent"], 26)
+
+			joiner = self._row(rows, employee=created[0])
+			self.assertEqual(joiner["day_19"], "")
+			self.assertEqual(joiner["day_20"], "Absent")
+			self.assertEqual(joiner["present"], 0)
+			self.assertEqual(joiner["absent"], 12)
+			self.assertEqual(joiner["leave"], 0)
+			self.assertEqual(joiner["half_day"], 0)
+
+			leaver = self._row(rows, employee=created[1])
+			self.assertEqual(leaver["day_8"], "Holiday")
+			self.assertEqual(leaver["day_10"], "Absent")
+			self.assertEqual(leaver["day_11"], "")
+			self.assertEqual(leaver["absent"], 9)
+			self.assertEqual(leaver["present"] + leaver["leave"] + leaver["half_day"], 0)
+
+			self.assertFalse(any(item["employee"] == created[2] for item in rows))
+		finally:
+			frappe.set_user("Administrator")
+			for name in created:
+				if frappe.db.exists("Employee", name):
+					frappe.db.set_value("Employee", name, "docstatus", 0)
+					frappe.delete_doc("Employee", name, force=True, ignore_permissions=True)
+			frappe.db.commit()
+
 	def test_invalid_filters(self):
 		self.assertRaises(frappe.ValidationError, parse_date_range, {"month": "2026-13"})
 		self.assertRaises(frappe.ValidationError, attendance_summary, {"month": "2026-03", "company": "No Such Co"})
@@ -267,8 +393,9 @@ class TestReports(IntegrationTestCase):
 		for expected in (
 			"Attendance Summary",
 			"Employee Date-wise Attendance",
+			"Monthly Attendance Grid",
 			"Punch Log",
-			"Late Coming / Early Going",
+			"Late Coming and Early Going",
 			"Leave Balance",
 			"Employee Master",
 			"Onboarding Status",
@@ -278,8 +405,9 @@ class TestReports(IntegrationTestCase):
 		for name in (
 			"Attendance Summary",
 			"Employee Date-wise Attendance",
+			"Monthly Attendance Grid",
 			"Punch Log",
-			"Late Coming / Early Going",
+			"Late Coming and Early Going",
 			"Leave Balance",
 			"Employee Master",
 			"Onboarding Status",

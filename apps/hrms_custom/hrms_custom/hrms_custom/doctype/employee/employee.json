@@ -6,6 +6,7 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "profile_header",
   "basic_section",
   "first_name",
   "middle_name",
@@ -33,6 +34,7 @@
   "other_employee_type",
   "attendance_section",
   "geofence_policy",
+  "holiday_list",
   "notifications_section",
   "notify_shift_start",
   "notify_shift_end",
@@ -64,6 +66,10 @@
   "ifsc_code"
  ],
  "fields": [
+  {
+   "fieldname": "profile_header",
+   "fieldtype": "HTML"
+  },
   {
    "fieldname": "basic_section",
    "fieldtype": "Section Break",
@@ -243,6 +249,13 @@
    "in_standard_filter": 1,
    "label": "Out-of-Geofence Punch Policy",
    "options": "\nReject\nFlag"
+  },
+  {
+   "description": "Set from the company default when the employee joins; HR may override.",
+   "fieldname": "holiday_list",
+   "fieldtype": "Link",
+   "label": "Holiday List",
+   "options": "Holiday List"
   },
   {
    "collapsible": 1,
@@ -498,6 +511,11 @@
    "report": 1,
    "role": "HR Executive",
    "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Employee",
+   "select": 1
   }
  ],
  "search_fields": "employee_name,department,designation,employee_type,vendor",

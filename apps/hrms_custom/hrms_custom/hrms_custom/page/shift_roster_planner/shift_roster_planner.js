@@ -15,6 +15,8 @@ frappe.pages["shift-roster-planner"].refresh = function (wrapper) {
 
 frappe.provide("hrms");
 
+const ROSTER_WEEK_OFF = "__WEEK_OFF__";
+
 hrms.ShiftRosterPlanner = class ShiftRosterPlanner {
 	constructor(wrapper) {
 		this.wrapper = wrapper;
@@ -103,7 +105,10 @@ hrms.ShiftRosterPlanner = class ShiftRosterPlanner {
 			return;
 		}
 
-		const options = [`<option value="">—</option>`]
+		const options = [
+			`<option value="">—</option>`,
+			`<option value="${ROSTER_WEEK_OFF}">${__("Week Off")}</option>`,
+		]
 			.concat(
 				types.map(
 					(s) =>
@@ -132,7 +137,11 @@ hrms.ShiftRosterPlanner = class ShiftRosterPlanner {
 					.map((day) => {
 						const cell = emp_cells[day.date] || {};
 						const source = cell.source || "";
-						return `<td class="${day.is_holiday ? "holiday" : ""}">
+						const weekOff = cell.is_week_off || cell.shift_type === ROSTER_WEEK_OFF;
+						const klass = [day.is_holiday ? "holiday" : "", weekOff ? "week-off" : ""]
+							.filter(Boolean)
+							.join(" ");
+						return `<td class="${klass}">
 							<select class="form-control roster-cell" data-employee="${frappe.utils.escape_html(
 								emp.name
 							)}" data-date="${day.date}" data-source="${source}">
@@ -153,7 +162,9 @@ hrms.ShiftRosterPlanner = class ShiftRosterPlanner {
 
 		this.$body.html(`
 			<div class="roster-planner-meta text-muted">
-				${__("Pick a shift for each day, then Save. Clearing a cell removes the roster override.")}
+				${__(
+					"Pick a shift or Week Off for each day, then Save. Clearing a cell removes the roster override."
+				)}
 			</div>
 			<div class="roster-planner-wrap">
 				<table class="roster-planner-table">
@@ -173,7 +184,9 @@ hrms.ShiftRosterPlanner = class ShiftRosterPlanner {
 			const emp = $el.data("employee");
 			const date = $el.data("date");
 			const cell = (cells[emp] || {})[date];
-			if (cell && cell.shift_type) {
+			if (cell && (cell.is_week_off || cell.shift_type === ROSTER_WEEK_OFF)) {
+				$el.val(ROSTER_WEEK_OFF);
+			} else if (cell && cell.shift_type) {
 				$el.val(cell.shift_type);
 			}
 		});

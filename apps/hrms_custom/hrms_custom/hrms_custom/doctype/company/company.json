@@ -14,7 +14,9 @@
   "phone_no",
   "attendance_section",
   "geofence_policy",
-  "holiday_list"
+  "default_shift",
+  "holiday_list",
+  "default_week_off_weekdays"
  ],
  "fields": [
   {
@@ -68,10 +70,23 @@
    "options": "\nReject\nFlag"
   },
   {
+   "description": "Copied to each employee when they join this company (can be overridden on the Employee).",
    "fieldname": "holiday_list",
    "fieldtype": "Link",
-   "label": "Holiday List",
+   "label": "Default Holiday List",
    "options": "Holiday List"
+  },
+  {
+   "fieldname": "default_shift",
+   "fieldtype": "Link",
+   "label": "Default Shift",
+   "options": "Shift Type"
+  },
+  {
+   "description": "Comma-separated weekday names (e.g. Sunday or Sunday, Saturday). Seeded on each employee's shift roster for 12 months from date of joining.",
+   "fieldname": "default_week_off_weekdays",
+   "fieldtype": "Small Text",
+   "label": "Default Week Off Days"
   }
  ],
  "links": [

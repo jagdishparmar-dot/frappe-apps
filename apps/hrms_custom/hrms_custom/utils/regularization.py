@@ -5,6 +5,8 @@ from datetime import date, datetime, timedelta
 import frappe
 from frappe.utils import get_time, getdate
 
+from hrms_custom.permissions import is_hr
+
 REVIEWED_STATUSES = ("Approved", "Rejected")
 
 
@@ -45,6 +47,8 @@ def validate_request(employee: str, day, check_in, check_out, reason, exclude: s
 	target = getdate(day)
 	if target > getdate():
 		frappe.throw("You cannot regularize a future date")
+	if target == getdate() and not is_hr():
+		frappe.throw("You cannot regularize attendance for today")
 	if not frappe.db.exists("Employee", employee):
 		frappe.throw("Unknown employee")
 	if frappe.db.get_value("Employee", employee, "status") != "Active":
@@ -89,6 +93,8 @@ def regularization_dict(doc) -> dict:
 		"reviewed_on": str(doc.reviewed_on) if doc.reviewed_on else None,
 		"applied_in": doc.applied_in,
 		"applied_out": doc.applied_out,
+		"actual_check_in": format_time(doc.actual_check_in),
+		"actual_check_out": format_time(doc.actual_check_out),
 	}
 
 
@@ -133,15 +139,37 @@ def upsert_checkin(employee: str, log_type: str, when: datetime, regularization:
 	return doc.name
 
 
+def _punch_before_regularization(employee: str, log_type: str, day: date, regularization: str) -> str | None:
+	"""Clock time of the punch that approval is about to replace. Empty when there was no punch."""
+	name = _existing_checkin(employee, log_type, day)
+	if not name:
+		return None
+	row = frappe.db.get_value(
+		"Employee Checkin", name, ["time", "attendance_regularization"], as_dict=True
+	)
+	if not row or row.attendance_regularization == regularization:
+		return None
+	return format_time(row.time)
+
+
 def apply_regularization(doc) -> dict[str, str | None]:
 	day = getdate(doc.date)
-	applied = {"in": None, "out": None}
+	applied = {
+		"in": None,
+		"out": None,
+		"actual_in": format_time(doc.actual_check_in),
+		"actual_out": format_time(doc.actual_check_out),
+	}
 	if doc.requested_check_in:
+		if not applied["actual_in"]:
+			applied["actual_in"] = _punch_before_regularization(doc.employee, "IN", day, doc.name)
 		applied["in"] = upsert_checkin(
 			doc.employee, "IN", combine_date_time(day, doc.requested_check_in), doc.name
 		)
 	if doc.requested_check_out:
 		out_day = resolve_out_day(day, doc.requested_check_in, doc.requested_check_out)
+		if not applied["actual_out"]:
+			applied["actual_out"] = _punch_before_regularization(doc.employee, "OUT", out_day, doc.name)
 		applied["out"] = upsert_checkin(
 			doc.employee, "OUT", combine_date_time(out_day, doc.requested_check_out), doc.name
 		)

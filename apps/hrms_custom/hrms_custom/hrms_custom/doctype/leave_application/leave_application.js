@@ -1,5 +1,6 @@
 frappe.ui.form.on("Leave Application", {
 	refresh(frm) {
+		set_own_employee(frm);
 		if (frm.is_new() || !frappe.user.has_role(["System Manager", "HR Admin", "HR Executive"])) return;
 		if (frm.doc.status !== "Open") return;
 
@@ -14,6 +15,11 @@ frappe.ui.form.on("Leave Application", {
 		});
 	},
 });
+
+function set_own_employee(frm) {
+	if (!frm.is_new() || frm.doc.employee || frappe.user.has_role(["System Manager", "HR Admin", "HR Executive"])) return;
+	if (frappe.boot.hrms_session_employee) frm.set_value("employee", frappe.boot.hrms_session_employee);
+}
 
 function review(frm, status, remarks) {
 	frappe.call({

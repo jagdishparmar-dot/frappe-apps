@@ -140,6 +140,15 @@
 	color: var(--yellow-800, #92400e);
 }
 
+.live-attendance-badge.week-off {
+	background: var(--blue-50, #e8f4fc);
+	color: var(--blue-800, #075985);
+}
+
+.live-attendance-card.week-off .value {
+	color: var(--blue-700, #0369a1);
+}
+
 .live-attendance-badge.absent {
 	background: var(--red-50, #fef2f2);
 	color: var(--red-700, #b91c1c);

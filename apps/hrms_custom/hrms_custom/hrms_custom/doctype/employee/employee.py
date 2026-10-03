@@ -18,7 +18,16 @@ class Employee(Document):
 		if self.ifsc_code:
 			self.ifsc_code = self.ifsc_code.strip().upper()
 
+	def after_insert(self):
+		from hrms_custom.utils.employee_defaults import apply_company_defaults
+
+		apply_company_defaults(self, is_new=True)
+
 	def on_update(self):
+		if self.has_value_changed("company"):
+			from hrms_custom.utils.employee_defaults import apply_company_defaults
+
+			apply_company_defaults(self, is_new=False)
 		if self.user_id:
 			self.grant_employee_role()
 

@@ -26,3 +26,6 @@ def extend_bootinfo(bootinfo):
 	bootinfo["hrms_administrator_desk"] = is_administrator_desk_user()
 	bootinfo["hrms_admin_only_menu_names"] = list(ADMIN_ONLY_MENU_NAMES)
 	bootinfo["hrms_admin_only_menu_labels"] = list(ADMIN_ONLY_MENU_LABELS)
+	user = frappe.session.user
+	if user and user != "Guest":
+		bootinfo["hrms_session_employee"] = frappe.db.get_value("Employee", {"user_id": user}, "name")

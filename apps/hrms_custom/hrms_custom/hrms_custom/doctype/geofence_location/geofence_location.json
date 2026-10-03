@@ -12,7 +12,9 @@
   "column_break_coords",
   "latitude",
   "longitude",
-  "radius_meters"
+  "radius_meters",
+  "section_break_map",
+  "map"
  ],
  "fields": [
   {
@@ -65,6 +67,15 @@
    "in_list_view": 1,
    "label": "Radius (meters)",
    "reqd": 1
+  },
+  {
+   "fieldname": "section_break_map",
+   "fieldtype": "Section Break",
+   "label": "Map"
+  },
+  {
+   "fieldname": "map",
+   "fieldtype": "HTML"
   }
  ],
  "index_web_pages_for_search": 0,

@@ -15,6 +15,10 @@
   "requested_check_in",
   "column_break_out",
   "requested_check_out",
+  "actual_section",
+  "actual_check_in",
+  "column_break_actual",
+  "actual_check_out",
   "reason_section",
   "reason",
   "remarks",
@@ -94,6 +98,28 @@
    "label": "Requested Check Out"
   },
   {
+   "fieldname": "actual_section",
+   "fieldtype": "Section Break",
+   "label": "Actual punches",
+   "description": "The punch already on the day, saved when HR approves. Empty when there was no punch."
+  },
+  {
+   "fieldname": "actual_check_in",
+   "fieldtype": "Time",
+   "label": "Actual Check In",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_actual",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "actual_check_out",
+   "fieldtype": "Time",
+   "label": "Actual Check Out",
+   "read_only": 1
+  },
+  {
    "fieldname": "reason_section",
    "fieldtype": "Section Break",
    "label": "Reason"
@@ -140,7 +166,7 @@
   }
  ],
  "links": [],
- "modified": "2026-09-26 21:00:00.000000",
+  "modified": "2026-10-03 23:59:00.000000",
  "modified_by": "Administrator",
  "module": "HRMS Custom",
  "name": "Attendance Regularization",

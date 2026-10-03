@@ -247,7 +247,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Reports",
-   "link_count": 7,
+   "link_count": 8,
    "onboard": 0,
    "type": "Card Break"
   },
@@ -274,6 +274,16 @@
   {
    "hidden": 0,
    "is_query_report": 1,
+   "label": "Monthly Attendance Grid",
+   "link_count": 0,
+   "link_to": "Monthly Attendance Grid",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
    "label": "Punch Log",
    "link_count": 0,
    "link_to": "Punch Log",
@@ -284,9 +294,9 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Late Coming / Early Going",
+   "label": "Late Coming and Early Going",
    "link_count": 0,
-   "link_to": "Late Coming / Early Going",
+   "link_to": "Late Coming and Early Going",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"

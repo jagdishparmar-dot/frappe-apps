@@ -10,7 +10,7 @@
  "link": "/desk/hrms",
  "link_type": "External",
  "logo_url": "/assets/hrms_custom/images/hrms-logo.svg",
- "modified": "2026-09-26 14:00:00.000000",
+ "modified": "2026-10-03 23:50:00.000000",
  "modified_by": "Administrator",
  "name": "HRMS",
  "owner": "Administrator",
@@ -31,6 +31,10 @@
   {
    "doctype": "Has Role",
    "role": "Manager"
+  },
+  {
+   "doctype": "Has Role",
+   "role": "Employee"
   }
  ],
  "standard": 1

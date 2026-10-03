@@ -1,8 +1,11 @@
 import frappe
 from frappe.tests import IntegrationTestCase
 
+from hrms_custom.api import attendance as attendance_api
 from hrms_custom.api import shift
+from hrms_custom.api.shift import ROSTER_WEEK_OFF
 from hrms_custom.tests.utils import TEST_COMPANY, call, get_test_company, make_employee_user
+from hrms_custom.utils.reports import employee_date_attendance_rows, monthly_attendance_grid_rows
 
 EMPLOYEE_USER = "roster.employee@example.com"
 OTHER_USER = "roster.other@example.com"
@@ -135,6 +138,45 @@ class TestRosterApi(IntegrationTestCase):
 		self.assertEqual(days["2026-10-01"]["shift"]["name"], morning)
 		self.assertEqual(days["2026-10-01"]["shift"]["source"], "assignment")
 
+	def test_roster_week_off_shows_in_grid_calendar_and_attendance(self):
+		morning = self.make_shift("Roster WeekOff Day")
+		self.assign(self.employee, morning, "2026-10-01", "2026-10-31")
+
+		frappe.set_user(HR_USER)
+		status, body = call(
+			shift.bulk_assign_roster,
+			entries=[{"employee": self.employee, "date": "2026-10-11", "shift_type": ROSTER_WEEK_OFF}],
+		)
+		self.assertEqual(status, 200, body)
+		self.assertEqual(body["data"]["saved"], 1)
+		frappe.db.commit()
+
+		_, roster = call(shift.get_roster, month="2026-10", department=self.department, company=self.company)
+		cell = roster["data"]["cells"][self.employee]["2026-10-11"]
+		self.assertEqual(cell["shift_type"], ROSTER_WEEK_OFF)
+		self.assertEqual(cell["is_week_off"], 1)
+
+		frappe.set_user(EMPLOYEE_USER)
+		days = call(shift.my_shift_calendar, month="2026-10")[1]["data"]["days"]
+		self.assertEqual(days["2026-10-11"]["is_week_off"], 1)
+		self.assertIsNone(days["2026-10-11"].get("shift"))
+
+		frappe.set_user("Administrator")
+		row = employee_date_attendance_rows(
+			{"from_date": "2026-10-11", "to_date": "2026-10-11", "employee": self.employee}
+		)[0]
+		self.assertEqual(row["status"], "Week Off")
+		self.assertEqual(row["is_week_off"], 1)
+		grid = monthly_attendance_grid_rows({"month": "2026-10", "employee": self.employee})
+		self.assertEqual(grid[0]["day_11"], "Week Off")
+
+		frappe.set_user(EMPLOYEE_USER)
+		status, body = call(attendance_api.my_attendance, month="2026-10")
+		self.assertEqual(status, 200, body)
+		month = body["data"]
+		self.assertEqual(month["days"]["2026-10-11"]["status"], "Week Off")
+		self.assertGreaterEqual(month["counts"]["week_off"], 1)
+
 	def test_clearing_a_cell_restores_assignment(self):
 		morning = self.make_shift("Roster Clear Day")
 		night = self.make_shift("Roster Clear Night", start="22:00:00", end="06:00:00")
@@ -220,6 +262,7 @@ class TestRosterApi(IntegrationTestCase):
 			"Reports",
 			"Attendance Summary",
 			"Employee Date-wise Attendance",
+			"Monthly Attendance Grid",
 			"Punch Log",
 			"Leave Balance",
 		):

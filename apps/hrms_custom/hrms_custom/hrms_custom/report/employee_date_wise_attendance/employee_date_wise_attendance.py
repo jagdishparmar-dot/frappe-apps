@@ -13,6 +13,11 @@ def execute(filters=None):
 		{"label": "Status", "fieldname": "status", "fieldtype": "Data", "width": 110},
 		{"label": "In", "fieldname": "in_time", "fieldtype": "Datetime", "width": 160},
 		{"label": "Out", "fieldname": "out_time", "fieldtype": "Datetime", "width": 160},
+		{"label": "Regularized", "fieldname": "regularized", "fieldtype": "Data", "width": 120},
+		{"label": "Actual In", "fieldname": "actual_in_time", "fieldtype": "Time", "width": 110},
+		{"label": "Actual Out", "fieldname": "actual_out_time", "fieldtype": "Time", "width": 110},
+		{"label": "Regularized In", "fieldname": "regularized_in_time", "fieldtype": "Time", "width": 130},
+		{"label": "Regularized Out", "fieldname": "regularized_out_time", "fieldtype": "Time", "width": 140},
 		{"label": "Hours", "fieldname": "worked_hours", "fieldtype": "Data", "width": 90},
 		{"label": "Shift", "fieldname": "shift_type", "fieldtype": "Data", "width": 120},
 	]

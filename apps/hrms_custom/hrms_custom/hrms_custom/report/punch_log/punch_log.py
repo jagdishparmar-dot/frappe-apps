@@ -7,6 +7,7 @@ def execute(filters=None):
 		{"label": "Employee", "fieldname": "employee", "fieldtype": "Link", "options": "Employee", "width": 130},
 		{"label": "Employee Name", "fieldname": "employee_name", "fieldtype": "Data", "width": 160},
 		{"label": "Log Type", "fieldname": "log_type", "fieldtype": "Data", "width": 80},
+		{"label": "Regularized", "fieldname": "regularized", "fieldtype": "Data", "width": 120},
 		{"label": "Latitude", "fieldname": "latitude", "fieldtype": "Float", "width": 110, "precision": 7},
 		{"label": "Longitude", "fieldname": "longitude", "fieldtype": "Float", "width": 110, "precision": 7},
 		{"label": "Within Geofence", "fieldname": "is_within_geofence", "fieldtype": "Check", "width": 130},

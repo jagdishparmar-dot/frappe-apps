@@ -3,6 +3,9 @@ from frappe.tests import IntegrationTestCase
 from frappe.utils import add_days, add_years, get_datetime, getdate
 
 from hrms_custom.api import regularization
+from hrms_custom.hrms_custom.report.employee_date_wise_attendance.employee_date_wise_attendance import (
+	execute as date_wise,
+)
 from hrms_custom.hrms_custom.report.punch_log.punch_log import execute as punch_log
 from hrms_custom.tests.utils import call, get_test_company, make_employee_user
 
@@ -79,6 +82,8 @@ class TestRegularizationApi(IntegrationTestCase):
 		self.assertEqual(body["data"]["status"], "Approved")
 		self.assertTrue(body["data"]["applied_in"])
 		self.assertTrue(body["data"]["applied_out"])
+		self.assertIsNone(body["data"]["actual_check_in"])
+		self.assertIsNone(body["data"]["actual_check_out"])
 		frappe.db.commit()
 
 		inn = frappe.get_doc("Employee Checkin", body["data"]["applied_in"])
@@ -91,6 +96,7 @@ class TestRegularizationApi(IntegrationTestCase):
 
 		_, punches = punch_log({"from_date": day, "to_date": day, "employee": self.employee})
 		self.assertEqual({p.log_type for p in punches}, {"IN", "OUT"})
+		self.assertTrue(all(p.regularized == "Regularized" for p in punches))
 
 	def test_approve_updates_existing_checkin(self):
 		day = "2026-02-11"
@@ -115,8 +121,17 @@ class TestRegularizationApi(IntegrationTestCase):
 		status, body = call(regularization.review_regularization, request=name, status="Approved")
 		self.assertEqual(status, 200, body)
 		self.assertEqual(body["data"]["applied_in"], existing.name)
+		self.assertEqual(body["data"]["actual_check_in"], "08:00:00")
+		self.assertIsNone(body["data"]["actual_check_out"])
 		frappe.db.commit()
 		self.assertEqual(get_datetime(frappe.get_doc("Employee Checkin", existing.name).time).strftime("%H:%M:%S"), "10:15:00")
+		_, rows = date_wise({"from_date": day, "to_date": day, "employee": self.employee})
+		match = next(row for row in rows if row["date"] == day)
+		self.assertEqual(match["regularized"], "Regularized")
+		self.assertEqual(match["actual_in_time"], "08:00:00")
+		self.assertIsNone(match["actual_out_time"])
+		self.assertEqual(match["regularized_in_time"], "10:15:00")
+		self.assertIsNone(match["regularized_out_time"])
 
 	def test_reject_needs_remarks_and_second_open_is_blocked(self):
 		day = "2026-02-12"
@@ -143,6 +158,24 @@ class TestRegularizationApi(IntegrationTestCase):
 		self.assertEqual(status, 200, body)
 		self.assertEqual(body["data"]["status"], "Rejected")
 		self.assertFalse(frappe.get_all("Employee Checkin", filters={"employee": self.employee, "attendance_regularization": name}))
+
+	def test_employee_cannot_regularize_today_but_hr_can(self):
+		from hrms_custom.utils.regularization import validate_request
+
+		today = str(getdate())
+		frappe.set_user(EMPLOYEE_USER)
+		status, body = call(
+			regularization.request_regularization,
+			date=today,
+			requested_check_in="09:00:00",
+			reason="Today",
+		)
+		self.assertEqual(status, 400, body)
+		self.assertIn("today", str(body).lower())
+
+		frappe.set_user(HR_USER)
+		preview = validate_request(self.employee, today, "09:00:00", None, "HR correction for today")
+		self.assertEqual(str(preview["date"]), today)
 
 	def test_future_date_empty_payload_and_joiner(self):
 		frappe.set_user(EMPLOYEE_USER)

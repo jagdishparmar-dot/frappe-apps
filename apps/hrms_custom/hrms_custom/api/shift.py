@@ -6,7 +6,13 @@ from frappe.utils import cint, flt, get_time, getdate
 from hrms_custom.api.response import ApiError, api_endpoint, success
 from hrms_custom.api.session import get_session_employee
 from hrms_custom.permissions import is_hr
-from hrms_custom.utils.shifts import build_calendar, build_roster, parse_entries, shift_type_dict
+from hrms_custom.utils.shifts import (
+	ROSTER_WEEK_OFF,
+	build_calendar,
+	build_roster,
+	parse_entries,
+	shift_type_dict,
+)
 
 
 @frappe.whitelist(methods=["GET"])
@@ -87,7 +93,11 @@ def get_roster(department=None, month=None, company=None):
 @frappe.whitelist(methods=["POST"])
 @api_endpoint
 def bulk_assign_roster(entries=None):
-	"""HR: create/update/clear `Shift Roster` rows. Empty `shift_type` clears that day."""
+	"""HR: create/update/clear `Shift Roster` rows.
+
+	Empty `shift_type` clears that day. Use `shift_type` = ROSTER_WEEK_OFF or `is_week_off` = 1
+	for a scheduled weekly off.
+	"""
 	if not is_hr():
 		raise ApiError("Only HR can update the roster", 403)
 	try:
@@ -106,6 +116,10 @@ def bulk_assign_roster(entries=None):
 		raw_date = row.get("date")
 		shift_type = (row.get("shift_type") or "").strip() or None
 		location = (row.get("location") or "").strip() or None
+		week_off = cint(row.get("is_week_off")) or shift_type == ROSTER_WEEK_OFF
+		if week_off:
+			shift_type = None
+			location = None
 		if not employee or not raw_date:
 			raise ApiError(f"Entry {index}: employee and date are required", 400)
 		try:
@@ -116,33 +130,40 @@ def bulk_assign_roster(entries=None):
 			raise ApiError(f"Entry {index}: employee not found", 400)
 
 		existing = frappe.db.get_value("Shift Roster", {"employee": employee, "date": day}, "name")
-		if not shift_type:
+		if not shift_type and not week_off:
 			if existing:
 				frappe.delete_doc("Shift Roster", existing, ignore_permissions=True)
 				cleared += 1
 			continue
-		if not frappe.db.exists("Shift Type", shift_type):
-			raise ApiError(f"Entry {index}: unknown shift type {shift_type}", 400)
-		if location and not frappe.db.exists("Geofence Location", location):
-			raise ApiError(f"Entry {index}: unknown location", 400)
-		if not location:
-			location = frappe.db.get_value("Shift Type", shift_type, "location")
+		if week_off:
+			payload = {
+				"employee": employee,
+				"date": day,
+				"shift_type": None,
+				"location": None,
+				"is_week_off": 1,
+			}
+		else:
+			if not frappe.db.exists("Shift Type", shift_type):
+				raise ApiError(f"Entry {index}: unknown shift type {shift_type}", 400)
+			if location and not frappe.db.exists("Geofence Location", location):
+				raise ApiError(f"Entry {index}: unknown location", 400)
+			if not location:
+				location = frappe.db.get_value("Shift Type", shift_type, "location")
+			payload = {
+				"employee": employee,
+				"date": day,
+				"shift_type": shift_type,
+				"location": location,
+				"is_week_off": 0,
+			}
 
 		if existing:
 			doc = frappe.get_doc("Shift Roster", existing)
-			doc.shift_type = shift_type
-			doc.location = location
+			doc.update(payload)
 			doc.save(ignore_permissions=True)
 		else:
-			frappe.get_doc(
-				{
-					"doctype": "Shift Roster",
-					"employee": employee,
-					"date": day,
-					"shift_type": shift_type,
-					"location": location,
-				}
-			).insert(ignore_permissions=True)
+			frappe.get_doc({"doctype": "Shift Roster", **payload}).insert(ignore_permissions=True)
 		saved += 1
 
 	return success({"saved": saved, "cleared": cleared}, "Roster saved")

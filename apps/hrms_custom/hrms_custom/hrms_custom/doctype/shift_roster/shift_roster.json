@@ -10,6 +10,7 @@
   "date",
   "column_break_shift",
   "shift_type",
+  "is_week_off",
   "location",
   "company"
  ],
@@ -53,8 +54,16 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Shift Type",
-   "options": "Shift Type",
-   "reqd": 1
+   "options": "Shift Type"
+  },
+  {
+   "default": "0",
+   "description": "Marks this day as a scheduled weekly off for the employee. Overrides shift assignment for attendance.",
+   "fieldname": "is_week_off",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Week Off"
   },
   {
    "description": "Defaults to the shift type location when left blank.",

@@ -187,22 +187,34 @@ class TestLiveAttendance(IntegrationTestCase):
 
 		late_day = self._snapshot("2026-04-02")
 		self.assertEqual(late_day["date"], "2026-04-02")
-		self.assertEqual(late_day["counts"], {"present": 1, "absent": 0, "late": 1, "half_day": 0, "on_leave": 0})
+		self.assertEqual(
+			late_day["counts"],
+			{"present": 1, "absent": 0, "late": 1, "half_day": 0, "on_leave": 0, "week_off": 0},
+		)
 		self.assertEqual(late_day["employees"][0]["status"], "Late")
 		self.assertEqual(late_day["employees"][0]["shift_type"], "Live Day")
 		self.assertTrue(late_day["employees"][0]["in_time"])
 		self.assertTrue(late_day["employees"][0]["out_time"])
 
 		leave_day = self._snapshot("2026-04-03")
-		self.assertEqual(leave_day["counts"], {"present": 0, "absent": 0, "late": 0, "half_day": 0, "on_leave": 1})
+		self.assertEqual(
+			leave_day["counts"],
+			{"present": 0, "absent": 0, "late": 0, "half_day": 0, "on_leave": 1, "week_off": 0},
+		)
 		self.assertEqual(leave_day["employees"][0]["status"], "On Leave")
 
 		holiday = self._snapshot("2026-04-05")
-		self.assertEqual(holiday["counts"], {"present": 0, "absent": 0, "late": 0, "half_day": 0, "on_leave": 0})
+		self.assertEqual(
+			holiday["counts"],
+			{"present": 0, "absent": 0, "late": 0, "half_day": 0, "on_leave": 0, "week_off": 0},
+		)
 		self.assertEqual(holiday["employees"][0]["status"], "Holiday")
 
 		absent = self._snapshot("2026-04-06")
-		self.assertEqual(absent["counts"], {"present": 0, "absent": 1, "late": 0, "half_day": 0, "on_leave": 0})
+		self.assertEqual(
+			absent["counts"],
+			{"present": 0, "absent": 1, "late": 0, "half_day": 0, "on_leave": 0, "week_off": 0},
+		)
 		self.assertEqual(absent["employees"][0]["status"], "Absent")
 
 		frappe.set_user("Administrator")

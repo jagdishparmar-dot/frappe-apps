@@ -21,6 +21,27 @@ after_install = "hrms_custom.setup.install.after_install"
 after_migrate = "hrms_custom.setup.install.after_migrate"
 
 extend_bootinfo = ["hrms_custom.boot.extend_bootinfo"]
+
+_EMPLOYEE_SCOPE = "hrms_custom.permissions.employee_permission_query"
+_EMPLOYEE_DOC = "hrms_custom.permissions.employee_has_permission"
+permission_query_conditions = {
+	"Employee": _EMPLOYEE_SCOPE,
+	"Leave Application": _EMPLOYEE_SCOPE,
+	"Leave Allocation": _EMPLOYEE_SCOPE,
+	"Attendance Regularization": _EMPLOYEE_SCOPE,
+	"Profile Update Request": _EMPLOYEE_SCOPE,
+	"Shift Assignment": _EMPLOYEE_SCOPE,
+	"Shift Roster": _EMPLOYEE_SCOPE,
+}
+has_permission = {
+	"Employee": _EMPLOYEE_DOC,
+	"Leave Application": _EMPLOYEE_DOC,
+	"Leave Allocation": _EMPLOYEE_DOC,
+	"Attendance Regularization": _EMPLOYEE_DOC,
+	"Profile Update Request": _EMPLOYEE_DOC,
+	"Shift Assignment": _EMPLOYEE_DOC,
+	"Shift Roster": _EMPLOYEE_DOC,
+}
 app_include_js = ["/assets/hrms_custom/js/desk_admin_menus.js"]
 
 scheduler_events = {

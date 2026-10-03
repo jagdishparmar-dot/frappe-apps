@@ -8,12 +8,11 @@ from hrms_custom.api.session import get_session_employee
 from hrms_custom.permissions import is_hr
 from hrms_custom.utils.geo import Geofence, resolve_geofence, validate_coordinates
 from hrms_custom.utils.reports import (
-	_first_in,
-	_last_out,
 	_load_checkins,
+	_pair_punches,
 	employee_month_attendance,
 	live_attendance,
-	punch_search_window,
+	log_search_window,
 	shift_window,
 )
 from hrms_custom.utils.shifts import shift_for_day
@@ -209,12 +208,19 @@ def today_punch_state(employee: str, day=None) -> dict:
 	requested = getdate(day) if day else getdate()
 	day = _active_attendance_date(employee, requested)
 	checkins = _load_checkins([employee], day, day).get(employee, [])
-	shift = shift_for_day(employee, day)
-	first_in = _first_in(checkins, day, shift)
+	by_day = {
+		day + timedelta(days=offset): shift_for_day(employee, day + timedelta(days=offset)) for offset in (-1, 0, 1)
+	}
+	shift = by_day.get(day)
 	real = [row for row in checkins if not cint(row.get("is_auto_closed"))]
-	last_out = _last_out(real, day, shift, after=first_in)
-	lo, hi = punch_search_window(day, shift)
-	visible = [row for row in real if lo <= get_datetime(row.time) <= hi]
+	first_in, last_out = _pair_punches(real, day, shift, by_day)
+	prev_shift = by_day.get(day - timedelta(days=1))
+	next_shift = by_day.get(day + timedelta(days=1))
+	visible = []
+	for row in real:
+		lo, hi = log_search_window(day, shift, row.log_type, prev_shift, next_shift)
+		if lo <= get_datetime(row.time) <= hi:
+			visible.append(row)
 	visible.sort(key=lambda row: get_datetime(row.time))
 	minutes = None
 	if first_in and last_out:
@@ -234,7 +240,12 @@ def today_punch_state(employee: str, day=None) -> dict:
 
 
 def _active_attendance_date(employee: str, day):
-	"""While an overnight shift is still open after midnight, keep punches on the start date."""
+	"""Keep an open overnight shift on its start date until the next shift can accept an IN.
+
+	After midnight the employee is still on yesterday's shift while that shift's punch-out
+	window is open. Once `now` falls inside today's IN window, punches belong to today so a
+	finished night shift does not block the next shift's punch-in.
+	"""
 	day = getdate(day)
 	now = now_datetime()
 	if getdate(now) != day:
@@ -244,6 +255,12 @@ def _active_attendance_date(employee: str, day):
 	if not prev_shift or not prev_shift.get("is_overnight"):
 		return day
 	_, end, _ = shift_window(prev, prev_shift)
+	today_shift = shift_for_day(employee, day)
+	if today_shift:
+		next_shift = shift_for_day(employee, day + timedelta(days=1))
+		in_lo, _in_hi = log_search_window(day, today_shift, "IN", prev_shift, next_shift)
+		if now >= in_lo:
+			return day
 	if now <= end + timedelta(hours=4):
 		return prev
 	return day

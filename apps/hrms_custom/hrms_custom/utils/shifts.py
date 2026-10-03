@@ -6,6 +6,8 @@ from datetime import date, timedelta
 import frappe
 from frappe.utils import cint, flt, get_time, getdate
 
+ROSTER_WEEK_OFF = "__WEEK_OFF__"
+
 
 def parse_month(month: str | None) -> date:
 	"""Return the first day of `YYYY-MM`. Defaults to the current month."""
@@ -105,6 +107,8 @@ def shift_for_day(employee: str, day: date | None = None) -> dict | None:
 			assignment.shift_type if assignment else None,
 		]
 	)
+	if roster and cint(roster.get("is_week_off")):
+		return None
 	if roster and roster.shift_type in types:
 		return shift_payload(
 			types[roster.shift_type],
@@ -136,13 +140,31 @@ def assignment_covering(employee: str, day: date) -> dict | None:
 def rosters_between(employee: str, start: date, end: date) -> dict[date, dict]:
 	rows = frappe.db.sql(
 		"""
-		select name, date, shift_type, location from `tabShift Roster`
+		select name, date, shift_type, location, is_week_off from `tabShift Roster`
 		where employee = %s and date between %s and %s
 		""",
 		(employee, start, end),
 		as_dict=True,
 	)
 	return {getdate(row.date): row for row in rows}
+
+
+def roster_week_offs_between(employees: list[str], start: date, end: date) -> dict[str, set[date]]:
+	"""Per-employee dates marked week off on Shift Roster."""
+	result: dict[str, set[date]] = {name: set() for name in employees}
+	if not employees:
+		return result
+	for row in frappe.db.sql(
+		"""
+		select employee, date from `tabShift Roster`
+		where employee in %(employees)s and date between %(start)s and %(end)s
+			and is_week_off = 1
+		""",
+		{"employees": employees, "start": start, "end": end},
+		as_dict=True,
+	):
+		result.setdefault(row.employee, set()).add(getdate(row.date))
+	return result
 
 
 def shift_payload(type_info: dict, *, assignment=None, roster=None, location=None) -> dict:
@@ -176,7 +198,9 @@ def assignment_on(assignments: list, day: date):
 
 def build_calendar(employee: str, company: str | None, month: str | None) -> dict:
 	first, last = month_range(parse_month(month))
-	company_list = frappe.db.get_value("Company", company, "holiday_list") if company else None
+	from hrms_custom.utils.employee_defaults import holiday_list_for_employee
+
+	employee_list = holiday_list_for_employee(employee, company)
 	assignments = frappe.db.sql(
 		"""
 		select name, shift_type, start_date, end_date from `tabShift Assignment`
@@ -190,7 +214,7 @@ def build_calendar(employee: str, company: str | None, month: str | None) -> dic
 	)
 	rosters = rosters_between(employee, first, last)
 	types = load_shift_types([*(a.shift_type for a in assignments), *(r.shift_type for r in rosters.values())])
-	holiday_lists = [company_list, *[types[n].get("holiday_list") for n in types]]
+	holiday_lists = [employee_list, *[types[n].get("holiday_list") for n in types]]
 	holidays = holidays_between(holiday_lists, first, last)
 
 	days = {}
@@ -200,23 +224,27 @@ def build_calendar(employee: str, company: str | None, month: str | None) -> dic
 		assignment = assignment_on(assignments, cursor)
 		roster = rosters.get(cursor)
 		shift = None
-		if roster and roster.shift_type in types:
+		week_off = bool(roster and cint(roster.get("is_week_off")))
+		if roster and not week_off and roster.shift_type in types:
 			shift = shift_payload(
 				types[roster.shift_type],
 				assignment=assignment.name if assignment else None,
 				roster=roster.name,
 				location=roster.location,
 			)
-		elif assignment and assignment.shift_type in types:
+		elif not week_off and assignment and assignment.shift_type in types:
 			shift = shift_payload(types[assignment.shift_type], assignment=assignment.name)
 		holiday = holidays.get(cursor)
-		if holiday or shift:
-			days[key] = {
+		if holiday or shift or week_off:
+			entry = {
 				"date": key,
 				"is_holiday": bool(holiday),
+				"is_week_off": int(week_off),
 				"holiday": holiday,
-				"shift": shift,
 			}
+			if shift:
+				entry["shift"] = shift
+			days[key] = entry
 		cursor += timedelta(days=1)
 
 	return {
@@ -275,7 +303,7 @@ def build_roster(month: str | None, department: str | None = None, company: str 
 		)
 		rosters = frappe.db.sql(
 			"""
-			select name, employee, date, shift_type, location
+			select name, employee, date, shift_type, location, is_week_off
 			from `tabShift Roster`
 			where employee in %(employees)s and date between %(first)s and %(last)s
 			""",
@@ -283,12 +311,12 @@ def build_roster(month: str | None, department: str | None = None, company: str 
 			as_dict=True,
 		)
 
-	used_types = [*(a.shift_type for a in assignments), *(r.shift_type for r in rosters)]
+	used_types = [*(a.shift_type for a in assignments), *(r.shift_type for r in rosters if r.shift_type)]
 	active_names = frappe.get_all("Shift Type", filters={"is_active": 1}, pluck="name", order_by="shift_name asc")
 	types = load_shift_types([*active_names, *used_types])
-	holiday_lists = [
-		frappe.db.get_value("Company", row.company, "holiday_list") for row in employees if row.company
-	]
+	from hrms_custom.utils.employee_defaults import holiday_list_for_employee
+
+	holiday_lists = [holiday_list_for_employee(row.name, row.company) for row in employees]
 	holidays = holidays_between(holiday_lists, first, last)
 
 	roster_map: dict[tuple[str, date], dict] = {
@@ -306,7 +334,15 @@ def build_roster(month: str | None, department: str | None = None, company: str 
 			roster = roster_map.get((emp, cursor))
 			assignment = assignment_on(assignment_by_employee.get(emp, []), cursor)
 			cell = None
-			if roster and roster.shift_type in types:
+			if roster and cint(roster.get("is_week_off")):
+				cell = {
+					"shift_type": ROSTER_WEEK_OFF,
+					"is_week_off": 1,
+					"source": "roster",
+					"roster": roster.name,
+					"assignment": assignment.name if assignment else None,
+				}
+			elif roster and roster.shift_type in types:
 				cell = {
 					"shift_type": roster.shift_type,
 					"location": roster.location or types[roster.shift_type].get("location"),

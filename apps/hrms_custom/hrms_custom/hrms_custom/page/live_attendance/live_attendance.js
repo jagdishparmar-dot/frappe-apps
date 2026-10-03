@@ -126,6 +126,7 @@ hrms.LiveAttendance = class LiveAttendance {
 			["absent", __("Absent"), counts.absent || 0],
 			["late", __("Late"), counts.late || 0],
 			["on-leave", __("On Leave"), counts.on_leave || 0],
+			["week-off", __("Week Off"), counts.week_off || 0],
 		]
 			.map(
 				([klass, label, value]) =>
@@ -144,6 +145,9 @@ hrms.LiveAttendance = class LiveAttendance {
 					emp.is_within_geofence === 0
 						? `<div class="live-attendance-flag">${__("Outside geofence")}</div>`
 						: "";
+				const tag = emp.regularized
+					? `<div class="live-attendance-flag">${__("Regularized")}</div>`
+					: "";
 				return `<tr>
 					<td>
 						<div>${frappe.utils.escape_html(emp.employee_name || emp.employee)}</div>
@@ -153,9 +157,9 @@ hrms.LiveAttendance = class LiveAttendance {
 					<td>${frappe.utils.escape_html(emp.shift_type || "—")}</td>
 					<td><span class="live-attendance-badge ${badge}">${frappe.utils.escape_html(
 						status
-					)}</span></td>
-					<td>${frappe.utils.escape_html(this.format_time(emp.in_time))}${geo}</td>
-					<td>${frappe.utils.escape_html(this.format_time(emp.out_time))}</td>
+					)}</span>${tag}</td>
+					<td>${this.punch_cell(emp, "in")}${geo}</td>
+					<td>${this.punch_cell(emp, "out")}</td>
 				</tr>`;
 			})
 			.join("");
@@ -190,6 +194,19 @@ hrms.LiveAttendance = class LiveAttendance {
 		`);
 	}
 
+	punch_cell(emp, side) {
+		const effective = this.format_time(side === "in" ? emp.in_time : emp.out_time);
+		if (!emp.regularized) {
+			return frappe.utils.escape_html(effective);
+		}
+		const actual = this.format_time(side === "in" ? emp.actual_in_time : emp.actual_out_time);
+		const corrected = this.format_time(
+			side === "in" ? emp.regularized_in_time : emp.regularized_out_time
+		);
+		return `<div>${frappe.utils.escape_html(actual)} <span class="text-muted">${__("Actual")}</span></div>
+			<div>${frappe.utils.escape_html(corrected)} <span class="text-muted">${__("Regularized")}</span></div>`;
+	}
+
 	format_time(value) {
 		if (!value) {
 			return "—";
@@ -197,6 +214,9 @@ hrms.LiveAttendance = class LiveAttendance {
 		const text = String(value);
 		if (text.length >= 16) {
 			return text.slice(11, 16);
+		}
+		if (text.length >= 5 && text.indexOf(":") === 2) {
+			return text.slice(0, 5);
 		}
 		return text;
 	}

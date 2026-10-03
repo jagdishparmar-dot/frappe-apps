@@ -64,7 +64,8 @@ at the top level of the JSON body, with a matching HTTP status code.
 
 Desk **Script Reports** (HR roles, export from the report view): Attendance Summary, Employee
 Date-wise Attendance (background / prepared, one row per employee per day with IN/OUT and
-status), Punch Log, Late Coming / Early Going, Leave Balance, Employee Master, Onboarding Status.
+status), Monthly Attendance Grid (one row per employee, one column per day of the month),
+Punch Log, Late Coming and Early Going, Leave Balance, Employee Master, Onboarding Status.
 
 Desk page **Live Attendance** (`/desk/live-attendance`) shows the same one-day counts plus an
 employee table and reloads every 60 seconds.

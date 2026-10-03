@@ -62,11 +62,18 @@ class AttendanceRegularization(Document):
 			self.flags.apply_checkins = False
 			applied = apply_regularization(self)
 			self.db_set(
-				{"applied_in": applied.get("in"), "applied_out": applied.get("out")},
+				{
+					"applied_in": applied.get("in"),
+					"applied_out": applied.get("out"),
+					"actual_check_in": applied.get("actual_in"),
+					"actual_check_out": applied.get("actual_out"),
+				},
 				update_modified=False,
 			)
 			self.applied_in = applied.get("in")
 			self.applied_out = applied.get("out")
+			self.actual_check_in = applied.get("actual_in")
+			self.actual_check_out = applied.get("actual_out")
 		if self.flags.notify_hr:
 			self.flags.notify_hr = False
 			notify_hr_of_regularization(self)

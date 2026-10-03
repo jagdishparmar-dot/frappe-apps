@@ -36,6 +36,15 @@ def company_holiday_dates(company: str | None, start: date, end: date) -> set[da
 	return set(holidays_between([list_name], start, end))
 
 
+def employee_holiday_dates(employee: str, company: str | None, start: date, end: date) -> set[date]:
+	from hrms_custom.utils.employee_defaults import holiday_list_for_employee
+
+	list_name = holiday_list_for_employee(employee, company)
+	if not list_name:
+		return set()
+	return set(holidays_between([list_name], start, end))
+
+
 def count_leave_days(
 	from_date,
 	to_date,
